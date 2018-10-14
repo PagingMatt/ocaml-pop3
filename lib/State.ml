@@ -3,4 +3,3 @@ type t =
   | Authorization
   | Transaction
   | Update
-  

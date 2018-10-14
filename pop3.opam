@@ -1,0 +1,27 @@
+opam-version: "2.0"
+name: "pop3"
+version: "0.1"
+synopsis: "A pure OCaml implementation of a POP3 server (RFC 1939)."
+description: """
+A pure OCaml implementation of a POP3 server (RFC 1939).
+"""
+maintainer: "Matt Harrison <matt.anthony.harrison@gmail.com>"
+authors: "Matt Harrison <matt.anthony.harrison@gmail.com>"
+license: "MIT"
+homepage: "https://github.com/m-harrison/ocaml-pop3"
+bug-reports: "https://github.com/m-harrison/ocaml-pop3/issues"
+dev-repo: "https://github.com/m-harrison/ocaml-pop3"
+build: [
+  ["dune" "subst"] {pinned}
+  ["dune" "build" "-p" name "-j" jobs]
+]
+build-test: [
+  ["dune" "runtest" "-p" name "-j" jobs]
+]
+depends: [
+  "alcotest" {test}
+  "dune" {build}
+  "irmin"
+  "odoc" {build}
+  "tcpip"
+]

@@ -1,0 +1,36 @@
+version: '0.0.{build}'
+image:
+  - Ubuntu
+branches:
+  only:
+  - master
+deploy: off
+init:
+install:
+  - sh: sudo apt-get update
+  - sh: sudo apt-get -y install ocaml opam
+  - sh: opam init --auto-setup
+  - sh: eval `opam config env`
+  - sh: opam switch 4.07.0
+  - sh: eval `opam config env`
+before_build:
+  - sh: opam install -y dune irmin odoc tcpip
+build_script:
+  - sh: dune build
+  - sh: dune build @doc
+after_build:
+before_test:
+  - sh: opam install -y alcotest
+test_script:
+  - sh: dune build @runtest
+after_test:
+  - sh: 7z a build.zip _build/*
+artifacts:
+  - path: build.zip
+    name: build
+    type: zip
+before_deploy:
+after_deploy:
+on_success:
+on_failure:
+on_finish:

@@ -1,0 +1,3 @@
+(test
+ (name pop3_unit_tests)
+ (libraries alcotest pop3))

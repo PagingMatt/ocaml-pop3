@@ -59,12 +59,12 @@ let parse_retr args =
 
 let parse_rset args =
   match args with
-  | [] -> Some Noop
+  | [] -> Some Rset
   | _  -> None
 
 let parse_stat args =
   match args with
-  | [] -> Some Quit
+  | [] -> Some Stat
   | _  -> None
 
 let parse_top args =

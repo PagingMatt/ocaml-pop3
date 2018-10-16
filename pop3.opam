@@ -20,8 +20,8 @@ build-test: [
 ]
 depends: [
   "alcotest" {test}
+  "conduit-lwt-unix"
   "dune" {build}
   "irmin"
   "odoc" {build}
-  "tcpip"
 ]

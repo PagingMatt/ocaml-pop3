@@ -1,3 +1,5 @@
+(** POP3 server. *)
+
 (** Starts a TCP server listening on port 110 to serve POP3 client connections.
     
     There is no limit to the number of concurrent connections and connections

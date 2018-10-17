@@ -1,3 +1,5 @@
+(** POP3 client commands. *)
+
 (** All minimal and optional POP3 commands. *)
 type t =
   | Apop of string * string

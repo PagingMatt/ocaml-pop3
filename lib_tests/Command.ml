@@ -1,7 +1,7 @@
 open Pop3.Command
 
 let t_of_string_opt_apop_valid () =
-  let cmd = "APOP a b" in
+  let cmd = "APOP A B" in
   match (t_of_string_opt cmd) with
   | None ->
     Alcotest.fail
@@ -74,7 +74,7 @@ let t_of_string_opt_noop_valid () =
       "t_of_string_opt returned 'Some ...' but expected 'Some (Noop)'."
 
 let t_of_string_opt_pass_valid () =
-  let cmd = "PASS a" in
+  let cmd = "PASS A" in
   match (t_of_string_opt cmd) with
   | None ->
     Alcotest.fail
@@ -183,7 +183,7 @@ let t_of_string_opt_uidl_valid_some () =
       "t_of_string_opt returned 'Some ...' but expected 'Some (Uidl ...)'."
 
 let t_of_string_opt_user_valid () =
-  let cmd = "USER a" in
+  let cmd = "USER A" in
   match (t_of_string_opt cmd) with
   | None ->
     Alcotest.fail

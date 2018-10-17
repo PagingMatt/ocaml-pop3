@@ -1,5 +1,10 @@
+open Unix
+
+type authorization_state =
+  | None
+  | Mailbox of string
+
 type t =
-  | NoConnection
-  | Authorization
-  | Transaction
-  | Update
+  | Authorization of tm * authorization_state
+  | Transaction of string
+  | Update of string

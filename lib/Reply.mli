@@ -1,3 +1,5 @@
+(** Replies from POP3 server to client commands. *)
+
 (** Status indicators in server replies indicate success or failure. *)
 type status_indicator =
   | Ok (** Success indicator. *)

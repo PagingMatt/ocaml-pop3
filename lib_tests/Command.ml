@@ -1,21 +1,47 @@
 open Pop3.Command
 
+module Helpers = struct
+  open Printf
+
+  let validate_none (cmd:t option) =
+    match cmd with
+    | None   -> ignore ()
+    | Some _ ->
+      Alcotest.fail
+        "t_of_string_opt returned 'Some ...' but expected 'None'."
+
+  let validate_some_apop (cmd:t option) e_a e_b =
+    match cmd with
+    | None ->
+      Alcotest.fail
+        "t_of_string_opt returned 'None' but expected 'Some ...'."
+    | Some (Apop (a, b)) ->
+      Alcotest.(check string)
+        (sprintf "First element of tuple for APOP expected to be '%s'." e_a)
+        e_a a;
+      Alcotest.(check string)
+        (sprintf "Second element of tuple for APOP expected to be '%s'." e_b)
+        e_b b
+    | Some _ ->
+      Alcotest.fail
+        "t_of_string_opt returned 'Some ...' but expected 'Some (Apop ...)'."
+end
+
 let t_of_string_opt_apop_valid () =
   let cmd = "APOP A B" in
-  match (t_of_string_opt cmd) with
-  | None ->
-    Alcotest.fail
-      "t_of_string_opt returned 'None' but expected 'Some ...'."
-  | Some (Apop (a, b)) ->
-    Alcotest.(check string)
-      "First element of tuple for APOP expected to be 'A'."
-      "A" a;
-    Alcotest.(check string)
-      "Second element of tuple for APOP expected to be 'B'."
-      "B" b
-  | Some _ ->
-    Alcotest.fail
-      "t_of_string_opt returned 'Some ...' but expected 'Some (Apop ...)'."
+  Helpers.validate_some_apop (t_of_string_opt cmd) "A" "B"
+
+let t_of_string_opt_apop_no_args_invalid () =
+  let cmd = "APOP" in
+  Helpers.validate_none (t_of_string_opt cmd)
+
+let t_of_string_opt_apop_one_arg_invalid () =
+  let cmd = "APOP A" in
+  Helpers.validate_none (t_of_string_opt cmd)
+
+let t_of_string_opt_apop_three_args_invalid () =
+  let cmd = "APOP A B C" in
+  Helpers.validate_none (t_of_string_opt cmd)
 
 let t_of_string_opt_dele_valid () =
   let cmd = "DELE 1" in
@@ -197,18 +223,21 @@ let t_of_string_opt_user_valid () =
       "t_of_string_opt returned 'Some ...' but expected 'Some (User ...)'."
 
 let unit_tests = [
-  ("Checks that valid APOP command parsed correctly"       , `Quick, t_of_string_opt_apop_valid     );
-  ("Checks that valid DELE command parsed correctly"       , `Quick, t_of_string_opt_dele_valid     );
-  ("Checks that valid LIST (None) command parsed correctly", `Quick, t_of_string_opt_list_valid_none);
-  ("Checks that valid LIST (Some) command parsed correctly", `Quick, t_of_string_opt_list_valid_some);
-  ("Checks that valid NOOP command parsed correctly"       , `Quick, t_of_string_opt_noop_valid     );
-  ("Checks that valid PASS command parsed correctly"       , `Quick, t_of_string_opt_pass_valid     );
-  ("Checks that valid QUIT command parsed correctly"       , `Quick, t_of_string_opt_quit_valid     );
-  ("Checks that valid RETR command parsed correctly"       , `Quick, t_of_string_opt_retr_valid     );
-  ("Checks that valid RSET command parsed correctly"       , `Quick, t_of_string_opt_rset_valid     );
-  ("Checks that valid STAT command parsed correctly"       , `Quick, t_of_string_opt_stat_valid     );
-  ("Checks that valid TOP command parsed correctly"        , `Quick, t_of_string_opt_top_valid      );
-  ("Checks that valid UIDL (None) command parsed correctly", `Quick, t_of_string_opt_uidl_valid_none);
-  ("Checks that valid UIDL (Some) command parsed correctly", `Quick, t_of_string_opt_uidl_valid_some);
-  ("Checks that valid USER command parsed correctly"       , `Quick, t_of_string_opt_user_valid     );
+  ("Checks that valid APOP command parsed correctly"           , `Quick, t_of_string_opt_apop_valid             );
+  ("Checks that valid DELE command parsed correctly"           , `Quick, t_of_string_opt_dele_valid             );
+  ("Checks that valid LIST (None) command parsed correctly"    , `Quick, t_of_string_opt_list_valid_none        );
+  ("Checks that valid LIST (Some) command parsed correctly"    , `Quick, t_of_string_opt_list_valid_some        );
+  ("Checks that valid NOOP command parsed correctly"           , `Quick, t_of_string_opt_noop_valid             );
+  ("Checks that valid PASS command parsed correctly"           , `Quick, t_of_string_opt_pass_valid             );
+  ("Checks that valid QUIT command parsed correctly"           , `Quick, t_of_string_opt_quit_valid             );
+  ("Checks that valid RETR command parsed correctly"           , `Quick, t_of_string_opt_retr_valid             );
+  ("Checks that valid RSET command parsed correctly"           , `Quick, t_of_string_opt_rset_valid             );
+  ("Checks that valid STAT command parsed correctly"           , `Quick, t_of_string_opt_stat_valid             );
+  ("Checks that valid TOP command parsed correctly"            , `Quick, t_of_string_opt_top_valid              );
+  ("Checks that valid UIDL (None) command parsed correctly"    , `Quick, t_of_string_opt_uidl_valid_none        );
+  ("Checks that valid UIDL (Some) command parsed correctly"    , `Quick, t_of_string_opt_uidl_valid_some        );
+  ("Checks that valid USER command parsed correctly"           , `Quick, t_of_string_opt_user_valid             );
+  ("Checks that APOP command with no arguments returns None"   , `Quick, t_of_string_opt_apop_no_args_invalid   );
+  ("Checks that APOP command with one argument returns None"   , `Quick, t_of_string_opt_apop_one_arg_invalid   );
+  ("Checks that APOP command with three arguments returns None", `Quick, t_of_string_opt_apop_three_args_invalid);
 ]

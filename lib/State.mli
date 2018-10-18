@@ -43,19 +43,22 @@ type 'a command_result = {
 (** Module type for handling commands while in the Authorization state. *)
 module type Authorizer = sig
   val authorize :
-    authorization_state -> Command.t -> authorization_state command_result
+    authorization_state -> Command.t
+      -> (authorization_state command_result) Lwt.t
 end
 
 (** Module type for handling commands while in the Transaction state. *)
 module type Transactor = sig
   val transact :
-    transaction_state -> Command.t -> transaction_state command_result
+    transaction_state -> Command.t
+      -> (transaction_state command_result) Lwt.t
 end
 
 (** Module type for handling commands while in the Update state. *)
 module type Updater = sig
   val update :
-    update_state -> Command.t -> update_state command_result
+    update_state -> Command.t
+      -> (update_state command_result) Lwt.t
 end
 
 (** State functor encapsulates server POP3 server state. Its parameters handle
@@ -84,7 +87,6 @@ module State (A : Authorizer) (T : Transactor) (U : Updater) : sig
     argument.
 
     TODO:
-      1. Lift into Lwt.t.
-      2. Also return server response. *)
-  val f : t -> Command.t -> t
+      1. Also return server response. *)
+  val f : t -> Command.t -> t Lwt.t
 end

@@ -1,3 +1,4 @@
+open Lwt.Infix
 open Unix
 
 type authorization_state = | Banner of tm | Mailbox of tm * string | Quit
@@ -12,17 +13,20 @@ type 'a command_result = {
 
 module type Authorizer = sig
   val authorize :
-    authorization_state -> Command.t -> authorization_state command_result
+    authorization_state -> Command.t
+      -> (authorization_state command_result) Lwt.t
 end
 
 module type Transactor = sig
   val transact :
-    transaction_state -> Command.t -> transaction_state command_result
+    transaction_state -> Command.t
+      -> (transaction_state command_result) Lwt.t
 end
 
 module type Updater = sig
   val update :
-    update_state -> Command.t -> update_state command_result
+    update_state -> Command.t
+      -> (update_state command_result) Lwt.t
 end
 
 module State (A : Authorizer) (T : Transactor) (U : Updater) : sig
@@ -34,7 +38,7 @@ module State (A : Authorizer) (T : Transactor) (U : Updater) : sig
 
   val start : unit -> t
 
-  val f : t -> Command.t -> t
+  val f : t -> Command.t -> t Lwt.t
 end = struct
   type t =
     | Disconnected
@@ -46,18 +50,18 @@ end = struct
 
   let f state cmd =
     match state with
-    | Disconnected -> Disconnected
+    | Disconnected -> Lwt.return Disconnected
     | Authorization auth_state ->
-      let res = A.authorize auth_state cmd in
+      A.authorize auth_state cmd >|= fun res ->
       (match res.state with
       | Banner t -> Authorization (Banner t)
       | Mailbox (t, m) ->
         if res.next then Transaction m else Authorization (Mailbox (t, m))
       | Quit -> Disconnected)
     | Transaction trans_state ->
-      let res = T.transact trans_state cmd in
+      T.transact trans_state cmd >|= fun res ->
       if res.next then Update res.state else Transaction res.state
     | Update update_state ->
-      let res = U.update update_state cmd in
+      U.update update_state cmd >|= fun res ->
       if res.next then Disconnected else Update res.state
 end

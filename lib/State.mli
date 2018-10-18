@@ -34,6 +34,8 @@ type transaction_state = string
     previously in the session. *)
 type update_state = string
 
+(** Result of handling a command. This records state, reply to send to client
+    and whether to move into next session state. *)
 type 'a command_result = {
   state : 'a;
   reply : Reply.t;
@@ -86,7 +88,7 @@ module State (A : Authorizer) (T : Transactor) (U : Updater) : sig
   (** Function to drive state machine from the client command passed as an
     argument.
 
-    TODO:
-      1. Also return server response. *)
+    @return tuple of next state and reply to send to client in a lightweight
+            thread. *)
   val f : t -> Command.t -> (t * Reply.t) Lwt.t
 end

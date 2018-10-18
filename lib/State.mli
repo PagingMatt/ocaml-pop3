@@ -2,23 +2,79 @@
 
 open Unix
 
-(** The inner state of the POP3 [Authorization] state. When the [Authorization]
-    state is initially entered, [None] will be used, [Mailbox] is for when the
-    USER command is used and successfully identifies a mailbox. *)
-type authorization_state =
-  | None
-  (** No mailbox is being authenticated for via the USER/PASS commands. *)
-  | Mailbox of string
-  (** A USER command identified a valid mailbox, waiting on a PASS command. *)
+(** The inner state of the POP3 'Authorization' state.
 
-(** POP3 session states as defined in RFC 1939. *)
-type t =
-  | Authorization of tm * authorization_state
-  (** [Authorization] wraps around the banner time of the connection being
-      opened (used for APOP authorization) and an incrementing authorization
-      state which after a successful USER command will hold a mailbox
-      identifier. *)
-  | Transaction of string
-  (** [Transaction] wraps around a mailbox identifier. *)
-  | Update of string
-  (** [Update] wraps around a mailbox identifier. *)
+    The [tm] value is the 'banner time' of the connection which can be used for
+    APOP authorization.
+
+    The [string option] value is the mailbox identifier if USER+PASS
+    authorization is being used and the previously issued command was a
+    successful USER command. *)
+type authorization_state = tm * string option
+
+(** The inner state of the POP3 'Transaction' state.
+
+    The [string] value is the mailbox identifier that has been authorized
+    previously in the session. *)
+type transaction_state = string
+
+(** The inner state of the POP3 'Update' state.
+
+    The [string] value is the mailbox identifier that has been authorized
+    previously in the session. *)
+type update_state = string
+
+type 'a command_result = {
+  state : 'a;
+  reply : Reply.t;
+  next : bool;
+}
+
+(** Module type for handling commands while in the Authorization state. *)
+module type Authorizer = sig
+  val authorize :
+    authorization_state -> Command.t -> authorization_state command_result
+end
+
+(** Module type for handling commands while in the Transaction state. *)
+module type Transactor = sig
+  val transact :
+    transaction_state -> Command.t -> transaction_state command_result
+end
+
+(** Module type for handling commands while in the Update state. *)
+module type Updater = sig
+  val update :
+    update_state -> Command.t -> update_state command_result
+end
+
+(** State functor encapsulates server POP3 server state. Its parameters handle
+    commands for each state it can transition through. *)
+module State (A : Authorizer) (T : Transactor) (U : Updater) : sig
+  (** POP3 session states as defined in RFC 1939. *)
+  type t =
+    | Disconnected
+    (** [Disconnected] represents the termination of the POP3 session. *)
+    | Authorization of authorization_state
+    (** [Authorization] represents the initial state of the POP3 session. *)
+    | Transaction of transaction_state
+    (** [Authorization] represents the intermediate state of the POP3
+        session. *)
+    | Update of update_state
+    (** [Update] represents the final state of the POP3 session. *)
+
+  (** Start a new POP3 session with 'banner time' of the [gmtime] whenever
+      [start] is evaluated.
+
+    @return a new state machine [t] in the [Authorization] with a [None]
+            mailbox and current 'banner time'. *)
+  val start : unit -> t
+
+  (** Function to drive state machine from the client command passed as an
+    argument.
+
+    TODO:
+      1. Lift into Lwt.t.
+      2. Also return server response. *)
+  val f : t -> Command.t -> t
+end

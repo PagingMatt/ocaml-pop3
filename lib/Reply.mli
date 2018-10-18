@@ -1,12 +1,16 @@
 (** Replies from POP3 server to client commands. *)
 
-(** Status indicators in server replies indicate success or failure. *)
-type status_indicator =
-  | Ok (** Success indicator. *)
-  | Error (** Failure indicator. *)
+(** Replies themselves are a variant of '+OK' and '-ERR' with additional
+    messages attached. *)
+type t =
+  (** In the '+OK' case there is an optional first line message and a list of
+      additional message lines. *)
+  | Ok of string option * (string list)
+  (** In the '-ERR' case there is an optional first line message, but no
+      subsequent message lines. *)
+  | Error of string option
 
-(** Serializes values of type [status_indicator] according to RFC
-    specifications.
+(** Serializes values of [t] according to RFC specifications.
     
-    @return '+OK' for [Ok] and '-ERR' for [Error]. *)
-val string_of_status_indicator : status_indicator -> string
+    @return '+OK ...' or '-ERR ...'. *)
+val string_of_t : t -> string

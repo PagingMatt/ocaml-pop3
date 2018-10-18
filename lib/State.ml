@@ -11,6 +11,10 @@ type 'a command_result = {
   next : bool;
 }
 
+module type Banner = sig
+  val get_time : unit -> tm
+end
+
 module type Authorizer = sig
   val authorize :
     authorization_state -> Command.t
@@ -29,7 +33,12 @@ module type Updater = sig
       -> (update_state command_result) Lwt.t
 end
 
-module State (A : Authorizer) (T : Transactor) (U : Updater) : sig
+module GmTimeBanner : Banner = struct
+  let get_time () =
+    time () |> gmtime
+end
+
+module State (B : Banner) (A : Authorizer) (T : Transactor) (U : Updater) : sig
   type t =
     | Disconnected
     | Authorization of authorization_state
@@ -46,7 +55,7 @@ end = struct
     | Transaction   of transaction_state
     | Update        of update_state
 
-  let start () = Authorization (Banner (time () |> gmtime))
+  let start () = Authorization (Banner (B.get_time ()))
 
   let f state cmd =
     match state with

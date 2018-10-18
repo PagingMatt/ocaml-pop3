@@ -42,6 +42,11 @@ type 'a command_result = {
   next : bool;
 }
 
+(** Module type for generating 'banner time' when connections are created. *)
+module type Banner = sig
+  val get_time : unit -> tm
+end
+
 (** Module type for handling commands while in the Authorization state. *)
 module type Authorizer = sig
   val authorize :
@@ -63,9 +68,12 @@ module type Updater = sig
       -> (update_state command_result) Lwt.t
 end
 
+(** Implementation of [Banner] module type for [gmtime]. *)
+module GmTimeBanner : Banner
+
 (** State functor encapsulates server POP3 server state. Its parameters handle
     commands for each state it can transition through. *)
-module State (A : Authorizer) (T : Transactor) (U : Updater) : sig
+module State (B : Banner) (A : Authorizer) (T : Transactor) (U : Updater) : sig
   (** POP3 session states as defined in RFC 1939. *)
   type t =
     | Disconnected
@@ -78,8 +86,8 @@ module State (A : Authorizer) (T : Transactor) (U : Updater) : sig
     | Update of update_state
     (** [Update] represents the final state of the POP3 session. *)
 
-  (** Start a new POP3 session with 'banner time' of the [gmtime] whenever
-      [start] is evaluated.
+  (** Start a new POP3 session with 'banner time' from [B] whenever [start] is
+      evaluated.
 
     @return a new state machine [t] in the initial [Authorization] state with a
             current 'banner time'. *)

@@ -4,13 +4,23 @@ open Unix
 
 (** The inner state of the POP3 'Authorization' state.
 
-    The [tm] value is the 'banner time' of the connection which can be used for
-    APOP authorization.
-
     The [string option] value is the mailbox identifier if USER+PASS
     authorization is being used and the previously issued command was a
     successful USER command. *)
-type authorization_state = tm * string option
+type authorization_state =
+  | Banner of tm
+  (** Initial state and that returned to on unsuccessful authorization attempts.
+
+      The [tm] value is the 'banner time' of the connection which can be used
+      for APOP authorization. *)
+  | Mailbox of tm * string
+  (** Intermediate state after successful USER command.
+
+      The [tm] value is the 'banner time' of the connection which can be used
+      for APOP authorization should the subsequent PASS command fail and the
+      initial state is returned to. *)
+  | Quit
+  (** Abort state when QUIT command is issued. *)
 
 (** The inner state of the POP3 'Transaction' state.
 
@@ -66,8 +76,8 @@ module State (A : Authorizer) (T : Transactor) (U : Updater) : sig
   (** Start a new POP3 session with 'banner time' of the [gmtime] whenever
       [start] is evaluated.
 
-    @return a new state machine [t] in the [Authorization] with a [None]
-            mailbox and current 'banner time'. *)
+    @return a new state machine [t] in the initial [Authorization] state with a
+            current 'banner time'. *)
   val start : unit -> t
 
   (** Function to drive state machine from the client command passed as an

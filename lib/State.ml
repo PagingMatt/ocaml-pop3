@@ -1,7 +1,6 @@
-open Command
 open Unix
 
-type authorization_state = tm * string option
+type authorization_state = | Banner of tm | Mailbox of tm * string | Quit
 type transaction_state   = string
 type update_state        = string
 
@@ -43,38 +42,22 @@ end = struct
     | Transaction   of transaction_state
     | Update        of update_state
 
-  let start () = Authorization ((time () |> gmtime), None)
+  let start () = Authorization (Banner (time () |> gmtime))
 
   let f state cmd =
     match state with
     | Disconnected -> Disconnected
-    | Authorization (time, auth_state) ->
-      (match auth_state with
-      | Some mailbox ->
-        (match cmd with
-        | Pass _password -> Transaction mailbox
-        | Quit -> Disconnected
-        | _ -> state)
-      | None ->
-        (match cmd with
-        | Apop (mailbox, _digest) -> Transaction mailbox
-        | Quit -> Disconnected
-        | User mailbox -> Authorization (time, (Some mailbox))
-        | _ -> state))
-    | Transaction mailbox ->
-      (match cmd with
-      | Dele _message -> Transaction mailbox
-      | List _  -> Transaction mailbox
-      | Noop -> Transaction mailbox
-      | Quit -> Update mailbox
-      | Retr _message -> Transaction mailbox
-      | Rset -> Transaction mailbox
-      | Stat -> Transaction mailbox
-      | Top (_message, _lines) -> Transaction mailbox
-      | Uidl _message -> Transaction mailbox
-      | _ -> Transaction mailbox)
-    | Update mailbox ->
-      (match cmd with
-      | Quit -> Update mailbox
-      | _ -> Update mailbox)
+    | Authorization auth_state ->
+      let res = A.authorize auth_state cmd in
+      (match res.state with
+      | Banner t -> Authorization (Banner t)
+      | Mailbox (t, m) ->
+        if res.next then Transaction m else Authorization (Mailbox (t, m))
+      | Quit -> Disconnected)
+    | Transaction trans_state ->
+      let res = T.transact trans_state cmd in
+      if res.next then Update res.state else Transaction res.state
+    | Update update_state ->
+      let res = U.update update_state cmd in
+      if res.next then Disconnected else Update res.state
 end

@@ -11,6 +11,9 @@ type t =
       subsequent message lines. *)
 
 (** Serializes values of [t] according to RFC specifications.
-    
+
     @return '+OK ...' or '-ERR ...'. *)
 val string_of_t : t -> string
+
+(** Reply value to indicate an internal server error. *)
+val internal_error : t

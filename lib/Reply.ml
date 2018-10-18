@@ -17,3 +17,5 @@ let string_of_t reply =
   | Ok (None, lines)     -> String.concat "\r\n" (string_of_ok::lines)
   | Ok (Some msg, lines) ->
     String.concat "\r\n" ((build_first_line string_of_ok msg)::lines)
+
+let internal_error = Error None

@@ -14,3 +14,6 @@ type t =
 
     @return '+OK ...' or '-ERR ...'. *)
 val string_of_t : t -> string
+
+(** Reply value to indicate an internal server error. *)
+val internal_error : t

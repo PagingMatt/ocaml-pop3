@@ -88,5 +88,5 @@ module State (A : Authorizer) (T : Transactor) (U : Updater) : sig
 
     TODO:
       1. Also return server response. *)
-  val f : t -> Command.t -> t Lwt.t
+  val f : t -> Command.t -> (t * Reply.t) Lwt.t
 end

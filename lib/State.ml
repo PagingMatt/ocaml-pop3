@@ -38,7 +38,7 @@ module State (A : Authorizer) (T : Transactor) (U : Updater) : sig
 
   val start : unit -> t
 
-  val f : t -> Command.t -> t Lwt.t
+  val f : t -> Command.t -> (t * Reply.t) Lwt.t
 end = struct
   type t =
     | Disconnected
@@ -50,18 +50,21 @@ end = struct
 
   let f state cmd =
     match state with
-    | Disconnected -> Lwt.return Disconnected
+    | Disconnected -> Lwt.return (Disconnected, Reply.internal_error)
     | Authorization auth_state ->
       A.authorize auth_state cmd >|= fun res ->
       (match res.state with
-      | Banner t -> Authorization (Banner t)
+      | Banner t -> (Authorization (Banner t), res.reply)
       | Mailbox (t, m) ->
-        if res.next then Transaction m else Authorization (Mailbox (t, m))
-      | Quit -> Disconnected)
+        if res.next then (Transaction m, res.reply)
+        else (Authorization (Mailbox (t, m)), res.reply)
+      | Quit -> (Disconnected, res.reply))
     | Transaction trans_state ->
       T.transact trans_state cmd >|= fun res ->
-      if res.next then Update res.state else Transaction res.state
+      if res.next then (Update res.state, res.reply)
+      else (Transaction res.state, res.reply)
     | Update update_state ->
       U.update update_state cmd >|= fun res ->
-      if res.next then Disconnected else Update res.state
+      if res.next then (Disconnected, res.reply)
+      else (Update res.state, res.reply)
 end

@@ -34,25 +34,32 @@ module BackingStoreState (B : Banner) (S : Store) : State = struct
     S.init p
     >|= fun store -> (Authorization None, B.time (), store)
 
-  let f_auth banner_time store cmd =
-    match cmd with
-    | User mailbox ->
-      Lwt.return
-        ((Authorization (Some mailbox), banner_time, store), Reply.ok (Some mailbox) [])
-    | Apop (mailbox, digest) ->
-      S.apop_of_mailbox store banner_time "" mailbox
+  let auth_apop store banner_time mailbox digest =
+    S.apop_of_mailbox store banner_time "" mailbox
       >|= fun digest_option ->
-        (match digest_option with
+        match digest_option with
         | None -> ((Authorization None, banner_time, store), Reply.err None)
         | Some digest' ->
           if digest = digest' then
-          ((Transaction mailbox, banner_time, store), Reply.ok (Some mailbox) []) else
-          ((Authorization None, banner_time, store), Reply.err None))
+          ((Transaction mailbox, banner_time, store),
+            Reply.ok (Some mailbox) []) else
+          ((Authorization None, banner_time, store),
+            Reply.err None)
+
+  let auth_user store banner_time mailbox =
+    Lwt.return
+      ((Authorization (Some mailbox), banner_time, store),
+        Reply.ok (Some mailbox) [])
+
+  let f_auth_a banner_time store cmd =
+    match cmd with
+    | User mailbox -> auth_user store banner_time mailbox
+    | Apop (mailbox, digest) -> auth_apop store banner_time mailbox digest
     | _ -> Lwt.return ((Authorization None, banner_time, store), Reply.err None)
 
   let f (state, banner_time, store) cmd =
     match state with
-    | Authorization None -> f_auth banner_time store cmd
+    | Authorization None -> f_auth_a banner_time store cmd
     | Authorization (Some _mailbox) ->
       Lwt.return ((Disconnected, banner_time, store), Reply.internal_error)
     | Disconnected ->

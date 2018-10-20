@@ -10,7 +10,7 @@ module GmTimeBanner : Banner = struct
     time () |> gmtime
 end
 
-module State (B : Banner) (S : Store) : sig
+module type ServerState = sig
   type pop3_session_state =
     | Disconnected
     | Authorization of string option
@@ -22,7 +22,9 @@ module State (B : Banner) (S : Store) : sig
   val start : unit -> t
 
   val f : t -> Command.t -> (t * Reply.t) Lwt.t
-end = struct
+end
+
+module State (B : Banner) (S : Store) : ServerState = struct
   type pop3_session_state =
     | Disconnected
     | Authorization of string option

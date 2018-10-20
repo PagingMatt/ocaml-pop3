@@ -14,7 +14,7 @@ module GmTimeBanner : Banner
 (** State functor encapsulates server POP3 server state. Its parameters handle
     the greeting banner for new connections and the underlying store for secrets
     and mail drops. *)
-module State (B : Banner) (S : Store) : sig
+module type ServerState = sig
   (** POP3 session states as defined in RFC 1939. *)
   type pop3_session_state =
     | Disconnected
@@ -43,3 +43,5 @@ module State (B : Banner) (S : Store) : sig
             thread. *)
   val f : t -> Command.t -> (t * Reply.t) Lwt.t
 end
+
+module State (B : Banner) (S : Store) : ServerState

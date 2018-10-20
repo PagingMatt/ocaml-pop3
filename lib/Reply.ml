@@ -19,3 +19,7 @@ let string_of_t reply =
     String.concat "\r\n" ((build_first_line string_of_ok msg)::lines)
 
 let internal_error = Error None
+
+let ok fl ls = Ok (fl, ls)
+
+let err fl = Error fl

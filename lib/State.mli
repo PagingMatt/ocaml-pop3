@@ -1,5 +1,6 @@
 (** State machine representing POP3 server. *)
 
+open Store
 open Unix
 
 (** The inner state of the POP3 'Authorization' state.
@@ -47,33 +48,13 @@ module type Banner = sig
   val get_time : unit -> tm
 end
 
-(** Module type for handling commands while in the Authorization state. *)
-module type Authorizer = sig
-  val authorize :
-    authorization_state -> Command.t
-      -> (authorization_state command_result) Lwt.t
-end
-
-(** Module type for handling commands while in the Transaction state. *)
-module type Transactor = sig
-  val transact :
-    transaction_state -> Command.t
-      -> (transaction_state command_result) Lwt.t
-end
-
-(** Module type for handling commands while in the Update state. *)
-module type Updater = sig
-  val update :
-    update_state -> Command.t
-      -> (update_state command_result) Lwt.t
-end
-
 (** Implementation of [Banner] module type for [gmtime]. *)
 module GmTimeBanner : Banner
 
 (** State functor encapsulates server POP3 server state. Its parameters handle
-    commands for each state it can transition through. *)
-module State (B : Banner) (A : Authorizer) (T : Transactor) (U : Updater) : sig
+    the greeting banner for new connections and the underlying store for secrets
+    and mail drops. *)
+module State (B : Banner) (S : Store) : sig
   (** POP3 session states as defined in RFC 1939. *)
   type t =
     | Disconnected

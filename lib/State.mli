@@ -11,10 +11,9 @@ end
 (** Implementation of [Banner] module type for [gmtime]. *)
 module GmTimeBanner : Banner
 
-(** State functor encapsulates server POP3 server state. Its parameters handle
-    the greeting banner for new connections and the underlying store for secrets
-    and mail drops. *)
-module type ServerState = sig
+(** The [State] signature encapsulates the types and values to construct the
+    POP3 state machine. *)
+module type State = sig
   (** POP3 session states as defined in RFC 1939. *)
   type pop3_session_state =
     | Disconnected
@@ -27,21 +26,23 @@ module type ServerState = sig
     | Update of string
     (** [Update] represents the final state of the POP3 session. *)
 
+  (** The overall server state is a tuple of POP3 session state and the banner
+      time of the connection. *)
   type t = pop3_session_state * tm
 
-  (** Start a new POP3 session with 'banner time' from [B] whenever [start] is
-      evaluated.
+  (** Create a new POP3 session state machine.
 
     @return a new state machine [t] in the initial [Authorization] state with a
             current 'banner time'. *)
   val start : unit -> t
 
   (** Function to drive state machine from the client command passed as an
-    argument.
+      argument.
 
-    @return tuple of next state and reply to send to client in a lightweight
-            thread. *)
+    @return promise of a tuple of next state and reply to send back to client. *)
   val f : t -> Command.t -> (t * Reply.t) Lwt.t
 end
 
-module State (B : Banner) (S : Store) : ServerState
+(** The [BackingStoreState] module is an implementation of the [State] signature
+    which is a functor over some [Banner] module and a backing [Store] module. *)
+module BackingStoreState (B : Banner) (S : Store) : State

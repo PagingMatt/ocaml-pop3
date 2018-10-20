@@ -3,7 +3,7 @@ open Lwt.Infix
 
 open State
 
-module Server (S : ServerState) : sig
+module Server (S : State) : sig
   val start : unit Lwt.t -> unit Lwt.t
 end = struct
   let callback _flow _input_channel output_channel =

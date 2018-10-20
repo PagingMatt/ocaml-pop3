@@ -14,27 +14,15 @@ module GmTimeBanner : Banner
 (** The [State] signature encapsulates the types and values to construct the
     POP3 state machine. *)
 module type State = sig
-  (** POP3 session states as defined in RFC 1939. *)
-  type pop3_session_state =
-    | Disconnected
-    (** [Disconnected] represents the termination of the POP3 session. *)
-    | Authorization of string option
-    (** [Authorization] represents the initial state of the POP3 session. *)
-    | Transaction of string
-    (** [Authorization] represents the intermediate state of the POP3
-        session. *)
-    | Update of string
-    (** [Update] represents the final state of the POP3 session. *)
-
-  (** The overall server state is a tuple of POP3 session state and the banner
-      time of the connection. *)
-  type t = pop3_session_state * tm
+  (** The overall server state. *)
+  type t
 
   (** Create a new POP3 session state machine.
 
     @return a new state machine [t] in the initial [Authorization] state with a
-            current 'banner time'. *)
-  val start : unit -> t
+            current 'banner time'. The [string] parameter is used to for
+            initializing the maildrop. *)
+  val start : string -> t Lwt.t
 
   (** Function to drive state machine from the client command passed as an
       argument.

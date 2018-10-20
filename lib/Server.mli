@@ -1,12 +1,16 @@
 (** POP3 server. *)
 
-(** Starts a TCP server listening on port 110 to serve POP3 client connections.
+open State
 
-    There is no limit to the number of concurrent connections and connections
-    do not timeout.
+module Server (S : ServerState) : sig
+  (** Starts a TCP server listening on port 110 to serve POP3 client connections.
 
-    The parameter passed to the function is a lightweight thread which will
-    kill the server should it become determined.
+      There is no limit to the number of concurrent connections and connections
+      do not timeout.
 
-    @return unit lightweight thread. *)
-val start : unit Lwt.t -> unit Lwt.t
+      The parameter passed to the function is a lightweight thread which will
+      kill the server should it become determined.
+
+      @return unit lightweight thread. *)
+  val start : unit Lwt.t -> unit Lwt.t
+end

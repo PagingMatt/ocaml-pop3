@@ -7,7 +7,7 @@ module Server (S : State) : sig
   val start : unit Lwt.t -> unit Lwt.t
 end = struct
   let callback _flow _input_channel output_channel =
-    Lwt_io.write output_channel "+OK POP3 server disconnecting"
+    Lwt_io.write output_channel (Reply.greeting |> Reply.string_of_t)
     (* TODO: implement state machine representing server. *)
     >|= ignore
 

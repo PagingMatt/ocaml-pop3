@@ -2,6 +2,7 @@
 
 open State
 
+(** The [Server] functor is applied to some session state machine module. *)
 module Server (S : State) : sig
   (** Starts a TCP server listening on port 110 to serve POP3 client connections.
 

@@ -1,7 +1,7 @@
 (library
  (name pop3)
  (public_name pop3)
- (libraries conduit-lwt-unix irmin irmin-unix))
+ (libraries conduit-lwt-unix irmin-unix))
 
 (documentation
  (package pop3))

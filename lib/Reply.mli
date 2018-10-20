@@ -9,6 +9,9 @@ type t
     @return '+OK ...' or '-ERR ...'. *)
 val string_of_t : t -> string
 
+(** Greeting from server when a new client connects. *)
+val greeting : t
+
 (** Reply value to indicate an internal server error. *)
 val internal_error : t
 

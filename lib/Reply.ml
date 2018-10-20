@@ -18,6 +18,8 @@ let string_of_t reply =
   | Ok (Some msg, lines) ->
     String.concat "\r\n" ((build_first_line string_of_ok msg)::lines)
 
+let greeting = Ok ((Some "greetings from OCaml POP3"), [])
+
 let internal_error = Error None
 
 let ok fl ls = Ok (fl, ls)

@@ -1,11 +1,10 @@
 (** POP3 session state machine. *)
 
 open Store
-open Unix
 
 (** Module type for generating 'banner time' when connections are created. *)
 module type Banner = sig
-  val time : unit -> tm
+  val time : unit -> Unix.tm
 end
 
 (** Implementation of [Banner] module type for current [gmtime]. *)
@@ -22,6 +21,9 @@ module type State = sig
             current 'banner time'. The first [string] parameter is used for the
             hostname and the second is for initializing the maildrop. *)
   val start : string -> string -> t Lwt.t
+
+  (** Get the banner time for a given session state. *)
+  val banner_time : t -> Unix.tm
 
   (** Predicate to determine if session is terminated.
 

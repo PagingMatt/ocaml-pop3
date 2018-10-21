@@ -18,11 +18,15 @@ let lines_of_t reply =
   | Ok (Some msg, lines) -> (build_first_line string_of_ok msg)::lines
 
 module Common : sig
-  val greeting : t
+  val greeting : string -> Unix.tm -> t
 
   val internal_error : t
 end = struct
-  let greeting = Ok ((Some "greetings from OCaml POP3"), [])
+  let greeting h t =
+    let ft,_ = Unix.mktime t in
+    (Printf.sprintf "<%f@%s>" ft h)
+    |> Printf.sprintf "server ready %s"
+    |> fun msg -> Ok ((Some msg), [])
 
   let internal_error = Error None
 end

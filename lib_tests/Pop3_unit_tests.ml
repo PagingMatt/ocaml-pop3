@@ -1,6 +1,7 @@
 let unit_test_suite = [
   ("Command unit tests", Command.unit_tests);
   ("Reply unit tests"  , Reply.unit_tests  );
+  ("State unit tests"  , State.unit_tests  );
 ]
 
 let () =

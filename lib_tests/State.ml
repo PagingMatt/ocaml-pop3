@@ -68,13 +68,13 @@ module Authorization = struct
         Alcotest.(check string) "Checking reply."
           "+OK 123" (Pop3.Reply.string_of_t r)
 
-    let f_auth_none_pass_err_reply switch () =
+    let f_auth_none_quit_ok_reply switch () =
       Lwt_switch.add_hook (Some switch) (fun () -> Lwt.return ());
       TestOkState.start ""
-      >>= fun s -> TestOkState.f s cmd_pass
+      >>= fun s -> TestOkState.f s cmd_quit
       >|= fun (_,r) ->
         Alcotest.(check string) "Checking reply."
-          "-ERR" (Pop3.Reply.string_of_t r)
+          "+OK" (Pop3.Reply.string_of_t r)
 
     let f_auth_none_user_ok_mailbox_reply switch () =
       Lwt_switch.add_hook (Some switch) (fun () -> Lwt.return ());
@@ -98,7 +98,8 @@ module Authorization = struct
       Alcotest_lwt.test_case "Check reply from invalid LIST (None) command in 'Authorization None'." `Quick (f_auth_none_other_cmd_err_reply cmd_list);
       Alcotest_lwt.test_case "Check reply from invalid LIST (Some) command in 'Authorization None'." `Quick (f_auth_none_other_cmd_err_reply cmd_list');
       Alcotest_lwt.test_case "Check reply from invalid NOOP command in 'Authorization None'."        `Quick (f_auth_none_other_cmd_err_reply cmd_noop);
-      Alcotest_lwt.test_case "Check reply from invalid PASS command in 'Authorization None'."        `Quick (f_auth_none_pass_err_reply);
+      Alcotest_lwt.test_case "Check reply from valid QUIT command in 'Authorization None'."          `Quick (f_auth_none_quit_ok_reply);
+      Alcotest_lwt.test_case "Check reply from invalid PASS command in 'Authorization None'."        `Quick (f_auth_none_other_cmd_err_reply cmd_pass);
       Alcotest_lwt.test_case "Check reply from invalid RETR command in 'Authorization None'."        `Quick (f_auth_none_other_cmd_err_reply cmd_retr);
       Alcotest_lwt.test_case "Check reply from invalid RSET command in 'Authorization None'."        `Quick (f_auth_none_other_cmd_err_reply cmd_rset);
       Alcotest_lwt.test_case "Check reply from invalid STAT command in 'Authorization None'."        `Quick (f_auth_none_other_cmd_err_reply cmd_stat);
@@ -112,15 +113,6 @@ module Authorization = struct
   module Some = struct
     open Helpers
 
-    let f_auth_some_apop_err_reply switch () =
-      Lwt_switch.add_hook (Some switch) (fun () -> Lwt.return ());
-      TestOkState.start ""
-      >>= fun s -> TestOkState.f s cmd_user
-      >>= fun (s',_) -> TestOkState.f s' cmd_apop
-      >|= fun (_ ,r) ->
-        Alcotest.(check string) "Checking reply."
-          "-ERR" (Pop3.Reply.string_of_t r)
-
     let f_auth_some_pass_ok_mailbox_reply switch () =
       Lwt_switch.add_hook (Some switch) (fun () -> Lwt.return ());
       TestOkState.start ""
@@ -130,19 +122,18 @@ module Authorization = struct
         Alcotest.(check string) "Checking reply."
           "+OK 123" (Pop3.Reply.string_of_t r)
 
-    let f_auth_some_user_err_reply switch () =
+    let f_auth_some_quit_ok_reply switch () =
       Lwt_switch.add_hook (Some switch) (fun () -> Lwt.return ());
       TestOkState.start ""
       >>= fun s -> TestOkState.f s cmd_user
-      >>= fun (s',_) -> TestOkState.f s' cmd_user
+      >>= fun (s',_) -> TestOkState.f s' cmd_quit
       >|= fun (_ ,r) ->
         Alcotest.(check string) "Checking reply."
-          "-ERR" (Pop3.Reply.string_of_t r)
+          "+OK" (Pop3.Reply.string_of_t r)
 
     let unit_tests = [
-      Alcotest_lwt.test_case "Check reply from invalid APOP command (following a USER command)." `Quick f_auth_some_apop_err_reply;
-      Alcotest_lwt.test_case "Check reply from valid PASS command." `Quick f_auth_some_pass_ok_mailbox_reply;
-      Alcotest_lwt.test_case "Check reply from invalid USER command (following a USER command)." `Quick f_auth_some_user_err_reply;
+      Alcotest_lwt.test_case "Check reply from valid QUIT command in 'Authorization (Some mailbox)'." `Quick f_auth_some_quit_ok_reply;
+      Alcotest_lwt.test_case "Check reply from valid PASS command in 'Authorization (Some mailbox)'." `Quick f_auth_some_pass_ok_mailbox_reply;
     ]
   end
 end

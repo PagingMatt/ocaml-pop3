@@ -41,6 +41,9 @@ module BackingStoreState (B : Banner) (S : Store) : State = struct
   let auth_fail store banner_time =
     ((Authorization None, banner_time, store), Reply.err None)
 
+  let auth_quit store banner_time =
+    ((Disconnected, banner_time, store), Reply.ok None [])
+
   let auth_result store banner_time mailbox success =
     if success then
       ((Transaction mailbox, banner_time, store), Reply.ok (Some mailbox) [])
@@ -67,13 +70,15 @@ module BackingStoreState (B : Banner) (S : Store) : State = struct
 
   let f_auth_none store banner_time cmd =
     match cmd with
-    | User mailbox -> auth_user store banner_time mailbox
     | Apop (mailbox, digest) -> auth_apop store banner_time mailbox digest
+    | Quit -> Lwt.return (auth_quit store banner_time)
+    | User mailbox -> auth_user store banner_time mailbox
     | _ -> Lwt.return (auth_fail store banner_time)
 
   let f_auth_some store banner_time mailbox cmd =
     match cmd with
     | Pass secret -> auth_pass store banner_time mailbox secret
+    | Quit -> Lwt.return (auth_quit store banner_time)
     | _ -> Lwt.return (auth_fail store banner_time)
 
   let f (state, banner_time, store) cmd =

@@ -16,6 +16,8 @@ module type State = sig
 
   val start : string -> t Lwt.t
 
+  val terminated : t -> bool
+
   val f : t -> Command.t -> (t * Reply.t) Lwt.t
 end
 
@@ -34,7 +36,7 @@ module BackingStoreState (B : Banner) (S : Store) : State = struct
     S.init p
     >|= fun store -> (Authorization None, B.time (), store)
 
-  let terminated s = (s = Disconnected)
+  let terminated (s,_,_) = (s = Disconnected)
 
   let auth_fail store banner_time =
     ((Authorization None, banner_time, store), Reply.err None)

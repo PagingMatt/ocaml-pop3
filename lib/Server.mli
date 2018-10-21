@@ -18,5 +18,6 @@ module Server (S : State) : sig
              the server.
 
       @return unit lightweight thread running the server. *)
-  val start : hostname:string -> maildrop:string -> stop:unit Lwt.t -> unit Lwt.t
+  val start : hostname:string -> maildrop:string -> stop:unit Lwt.t
+    -> unit Lwt.t
 end

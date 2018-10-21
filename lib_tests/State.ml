@@ -26,6 +26,9 @@ module Helpers = struct
 
     let apop_of_mailbox _s _t _h _m =
       Lwt.return (Some digest)
+
+    let read _s _m _i =
+      Lwt.return None
   end
 
   module NoopStoreB : Store = struct
@@ -38,6 +41,9 @@ module Helpers = struct
 
     let apop_of_mailbox _s _t _h _m =
       Lwt.return (Some digest')
+
+    let read _s _m _i =
+      Lwt.return None
   end
 
   module NoopStoreErr : Store = struct
@@ -49,6 +55,9 @@ module Helpers = struct
       Lwt.return None
 
     let apop_of_mailbox _s _t _h _m =
+      Lwt.return None
+
+    let read _s _m _i =
       Lwt.return None
   end
 

@@ -29,7 +29,7 @@ module BackingStoreState (B : Banner) (S : Store) : State = struct
     | Disconnected
     | Authorization of string option
     | Transaction   of string
-    (*| Update        of string*)
+    | Update        of string
 
   type t = string * pop3_session_state * Unix.tm * S.t
 
@@ -96,6 +96,27 @@ module BackingStoreState (B : Banner) (S : Store) : State = struct
     | _ ->
       Lwt.return (auth_fail hostname store banner_time)
 
+  let trans_fail hostname store banner_time mailbox =
+    ((hostname, Transaction mailbox, banner_time, store), Reply.err None)
+
+  let trans_quit hostname store banner_time mailbox =
+    ((hostname, Update mailbox, banner_time, store), Reply.ok None [])
+
+  let trans_retr hostname store banner_time mailbox msg =
+    S.read store mailbox msg
+    >|= fun ls_option ->
+      match ls_option with
+      | None -> trans_fail hostname store banner_time mailbox
+      | Some ls ->
+        ((hostname, Transaction mailbox, banner_time, store),
+          Reply.ok (Some "-1 octets") ls)
+
+  let f_trans hostname store banner_time mailbox cmd =
+    match cmd with
+    | Quit -> Lwt.return (trans_quit hostname store banner_time mailbox)
+    | Retr msg -> trans_retr hostname store banner_time mailbox msg
+    | _ -> Lwt.return (trans_fail hostname store banner_time mailbox)
+
   let f (hostname, state, banner_time, store) cmd =
     match state with
     | Authorization None ->
@@ -104,8 +125,8 @@ module BackingStoreState (B : Banner) (S : Store) : State = struct
       f_auth_some hostname store banner_time mailbox cmd
     | Disconnected ->
       Lwt.return ((hostname, Disconnected, banner_time, store), Reply.Common.internal_error)
-    | Transaction _ ->
+    | Transaction mailbox ->
+      f_trans hostname store banner_time mailbox cmd
+    | Update _ ->
       Lwt.return ((hostname, Disconnected, banner_time, store), Reply.Common.internal_error)
-    (*| Update _ ->
-      Lwt.return ((Disconnected, banner_time, store), Reply.internal_error)*)
 end

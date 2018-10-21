@@ -21,10 +21,17 @@ module type Store = sig
   (** Find the APOP digest for a given mailbox at a given banner time, on the
       given host using the secret from the secret store of [t].
 
-      @return [None] or [Some "<{tm}@{hostname}>{secret}"] dependending on
+      @return [None] or [Some "<{tm}@{hostname}>{secret}"] depending on
               whether the secret store of [t] contains the secret for the
               mailbox.*)
   val apop_of_mailbox : t -> Unix.tm -> string -> string -> string option Lwt.t
+
+  (** Read a message from store [t] in mailbox corresponding to the [string]
+      parameter with id corresponding to the [int] parameter.
+
+      @return [None] or [Some message_lines] depdending on whether the message
+              exists in the mailbox. This is wrapped in a lightweight thread.*)
+  val read : t -> string -> int -> string list option Lwt.t
 end
 
 (** The [IrminStore] module is an implementation of the [Store] signature which

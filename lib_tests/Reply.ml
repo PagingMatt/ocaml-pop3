@@ -65,11 +65,12 @@ let internal_error_is_error_none () =
   | _ -> Alcotest.fail "Unexpected line pattern."
 
 let unit_tests = [
-  ("Checking serialization of 'Error None'"               , `Quick, lines_of_t_error_none      );
-  ("Checking serialization of 'Error (Some 'A')'"         , `Quick, lines_of_t_error_some      );
-  ("Checking serialization of 'Ok (None, [])'"            , `Quick, lines_of_t_ok_none_empty   );
-  ("Checking serialization of 'Ok (None, ['A'; 'B'])'"    , `Quick, lines_of_t_ok_none_lines   );
-  ("Checking serialization of 'Ok (Some 'A', [])'"        , `Quick, lines_of_t_ok_some_empty   );
-  ("Checking serialization of 'Ok (Some 'A', ['B'; 'C'])'", `Quick, lines_of_t_ok_some_lines   );
-  ("Checking 'Reply.internal_error' is 'Error None'"      , `Quick, internal_error_is_error_none);
+  ("Checking serialization of 'Error None'"                            , `Quick, lines_of_t_error_none       );
+  ("Checking serialization of 'Error (Some 'A')'"                      , `Quick, lines_of_t_error_some       );
+  ("Checking serialization of 'Ok (None, [])'"                         , `Quick, lines_of_t_ok_none_empty    );
+  ("Checking serialization of 'Ok (None, ['A'; 'B'])'"                 , `Quick, lines_of_t_ok_none_lines    );
+  ("Checking serialization of 'Ok (Some 'A', [])'"                     , `Quick, lines_of_t_ok_some_empty    );
+  ("Checking serialization of 'Ok (Some 'A', ['B'; 'C'])'"             , `Quick, lines_of_t_ok_some_lines    );
+  ("Checking 'Reply.greeting' is 'OK (Some greetings from OCaml POP3)'", `Quick, greeting_is_ok_some_greeting);
+  ("Checking 'Reply.internal_error' is 'Error None'"                   , `Quick, internal_error_is_error_none);
 ]

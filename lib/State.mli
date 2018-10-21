@@ -24,6 +24,8 @@ module type State = sig
             initializing the maildrop. *)
   val start : string -> t Lwt.t
 
+  val terminated : t -> bool
+
   (** Function to drive state machine from the client command passed as an
       argument.
 

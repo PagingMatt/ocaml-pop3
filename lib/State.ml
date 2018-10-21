@@ -34,6 +34,8 @@ module BackingStoreState (B : Banner) (S : Store) : State = struct
     S.init p
     >|= fun store -> (Authorization None, B.time (), store)
 
+  let terminated s = (s = Disconnected)
+
   let auth_fail store banner_time =
     ((Authorization None, banner_time, store), Reply.err None)
 

@@ -96,10 +96,16 @@ module BackingStoreState (B : Banner) (S : Store) : State = struct
     | _ ->
       Lwt.return (auth_fail hostname store banner_time)
 
+  let trans_fail hostname store banner_time mailbox =
+    ((hostname, Transaction mailbox, banner_time, store), Reply.err None)
+
+  let trans_quit hostname store banner_time mailbox =
+    ((hostname, Update mailbox, banner_time, store), Reply.ok None [])
+
   let f_trans hostname store banner_time mailbox cmd =
     match cmd with
-    | Quit -> Lwt.return ((hostname, Update mailbox, banner_time, store), Reply.ok None [])
-    | _ -> Lwt.return ((hostname, Transaction mailbox, banner_time, store), Reply.err None)
+    | Quit -> Lwt.return (trans_quit hostname store banner_time mailbox)
+    | _ -> Lwt.return (trans_fail hostname store banner_time mailbox)
 
   let f (hostname, state, banner_time, store) cmd =
     match state with

@@ -107,7 +107,9 @@ module BackingStoreState (B : Banner) (S : Store) : State = struct
     >|= fun ls_option ->
       match ls_option with
       | None -> trans_fail hostname store banner_time mailbox
-      | Some ls -> Reply.ok (Some "-1 octets") ls
+      | Some ls ->
+        ((hostname, Transaction mailbox, banner_time, store),
+          Reply.ok (Some "-1 octets") ls)
 
   let f_trans hostname store banner_time mailbox cmd =
     match cmd with

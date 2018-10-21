@@ -8,6 +8,8 @@ module type Store = sig
   val secret_of_mailbox : t -> string -> string option Lwt.t
 
   val apop_of_mailbox : t -> Unix.tm -> string -> string -> string option Lwt.t
+
+  val read : t -> string -> int -> string list option Lwt.t
 end
 
 module IrminStore : Store = struct
@@ -33,4 +35,12 @@ module IrminStore : Store = struct
         Printf.sprintf "<%f@%s>%s" ft h secret
         |> Digest.string
         |> fun digest -> Some digest
+
+  let read s m i =
+    string_of_int i
+    |> fun msg -> IrminGitFsKvStore.find s ["mailboxes"; m; msg]
+    >|= fun contents ->
+      match contents with
+      | None -> None
+      | Some s -> Some (String.split_on_char '\n' s)
 end

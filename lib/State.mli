@@ -1,4 +1,4 @@
-(** State machine representing POP3 server. *)
+(** POP3 session state machine. *)
 
 open Store
 open Unix
@@ -8,13 +8,12 @@ module type Banner = sig
   val time : unit -> tm
 end
 
-(** Implementation of [Banner] module type for [gmtime]. *)
+(** Implementation of [Banner] module type for current [gmtime]. *)
 module GmTimeBanner : Banner
 
-(** The [State] signature encapsulates the types and values to construct the
-    POP3 state machine. *)
+(** Module type for POP3 session state machine. *)
 module type State = sig
-  (** The overall server state. *)
+  (** POP3 session state. *)
   type t
 
   (** Create a new POP3 session state machine.
@@ -24,16 +23,28 @@ module type State = sig
             hostname and the second is for initializing the maildrop. *)
   val start : string -> string -> t Lwt.t
 
-  (** Predicate to determine if state is terminated. *)
+  (** Predicate to determine if session is terminated.
+
+      @return [true] if the state [t] passed in would inidicate a terminated
+              session. *)
   val terminated : t -> bool
 
-  (** Function to drive state machine from the client command passed as an
-      argument.
+  (** Function to drive state machine.
+
+      Starting from some state [t] the [Command.t] is applied to the state to
+      determine the subsequent state and the reply to send back to the client.
 
     @return promise of a tuple of next state and reply to send back to client. *)
   val f : t -> Command.t -> (t * Reply.t) Lwt.t
 end
 
 (** The [BackingStoreState] module is an implementation of the [State] signature
-    which is a functor over some [Banner] module and a backing [Store] module. *)
+    which is a functor over some [Banner] module and a backing [Store] module.
+
+    The [Banner] module this is applied to determines the banner time presented
+    to the client at the start of a session.
+
+    The [Store] module this is applied to abstracts secret management for the
+    various mailboxes known to a session, as well as the actual backing store
+    for the maildrop itself. *)
 module BackingStoreState (B : Banner) (S : Store) : State

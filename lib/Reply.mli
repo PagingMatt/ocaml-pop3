@@ -1,6 +1,6 @@
-(** Replies from POP3 server to client commands. *)
+(** Replies that can be issued by a POP3 server in response to a POP3 client. *)
 
-(** Reply type. *)
+(** Replies. *)
 type t
 
 (** Serializes values of [t] according to RFC specifications. Each list element

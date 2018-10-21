@@ -20,7 +20,7 @@ build_script:
   - sh: dune build @doc
 after_build:
 before_test:
-  - sh: opam install -y alcotest
+  - sh: opam install -y alcotest alcotest-lwt
 test_script:
   - sh: dune build @runtest
 after_test:

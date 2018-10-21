@@ -84,10 +84,28 @@ module Authorization = struct
         Alcotest.(check string) "Checking reply."
           "+OK 123" (Pop3.Reply.string_of_t r)
 
+    let f_auth_none_other_cmd_err_reply cmd switch () =
+      Lwt_switch.add_hook (Some switch) (fun () -> Lwt.return ());
+      TestOkState.start ""
+      >>= fun s -> TestOkState.f s cmd
+      >|= fun (_,r) ->
+        Alcotest.(check string) "Checking reply."
+          "-ERR" (Pop3.Reply.string_of_t r)
+
     let unit_tests = [
-      Alcotest_lwt.test_case "Check reply from valid APOP command." `Quick f_auth_none_user_ok_mailbox_reply;
-      Alcotest_lwt.test_case "Check reply from invalid PASS command (not following a USER command)." `Quick f_auth_none_pass_err_reply;
-      Alcotest_lwt.test_case "Check reply from valid USER command." `Quick f_auth_none_user_ok_mailbox_reply;
+      Alcotest_lwt.test_case "Check reply from valid APOP command in 'Authorization None'."          `Quick (f_auth_none_user_ok_mailbox_reply);
+      Alcotest_lwt.test_case "Check reply from invalid DELE command in 'Authorization None'."        `Quick (f_auth_none_other_cmd_err_reply cmd_dele);
+      Alcotest_lwt.test_case "Check reply from invalid LIST (None) command in 'Authorization None'." `Quick (f_auth_none_other_cmd_err_reply cmd_list);
+      Alcotest_lwt.test_case "Check reply from invalid LIST (Some) command in 'Authorization None'." `Quick (f_auth_none_other_cmd_err_reply cmd_list');
+      Alcotest_lwt.test_case "Check reply from invalid NOOP command in 'Authorization None'."        `Quick (f_auth_none_other_cmd_err_reply cmd_noop);
+      Alcotest_lwt.test_case "Check reply from invalid PASS command in 'Authorization None'."        `Quick (f_auth_none_pass_err_reply);
+      Alcotest_lwt.test_case "Check reply from invalid RETR command in 'Authorization None'."        `Quick (f_auth_none_other_cmd_err_reply cmd_retr);
+      Alcotest_lwt.test_case "Check reply from invalid RSET command in 'Authorization None'."        `Quick (f_auth_none_other_cmd_err_reply cmd_rset);
+      Alcotest_lwt.test_case "Check reply from invalid STAT command in 'Authorization None'."        `Quick (f_auth_none_other_cmd_err_reply cmd_stat);
+      Alcotest_lwt.test_case "Check reply from invalid TOP command in 'Authorization None'."         `Quick (f_auth_none_other_cmd_err_reply cmd_top);
+      Alcotest_lwt.test_case "Check reply from invalid UIDL (None) command in 'Authorization None'." `Quick (f_auth_none_other_cmd_err_reply cmd_uidl);
+      Alcotest_lwt.test_case "Check reply from invalid UIDL (Some) command in 'Authorization None'." `Quick (f_auth_none_other_cmd_err_reply cmd_uidl');
+      Alcotest_lwt.test_case "Check reply from valid USER command in 'Authorization None'."          `Quick (f_auth_none_user_ok_mailbox_reply);
     ]
   end
 

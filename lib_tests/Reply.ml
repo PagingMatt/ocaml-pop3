@@ -50,6 +50,13 @@ let lines_of_t_ok_some_lines () =
       "C" l3;
   | _ -> Alcotest.fail "Unexpected line pattern."
 
+let greeting_is_ok_some_greeting () =
+  match Common.greeting |> lines_of_t with
+  | l::[] ->
+    Alcotest.(check string) "Checking 'greeting' is 'OK (Some greetings from OCaml POP3)'."
+      "+OK greetings from OCaml POP3" l
+  | _ -> Alcotest.fail "Unexpected line pattern."
+
 let internal_error_is_error_none () =
   match Common.internal_error |> lines_of_t with
   | l::[] ->

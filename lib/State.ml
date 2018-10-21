@@ -100,9 +100,9 @@ module BackingStoreState (B : Banner) (S : Store) : State = struct
     | Authorization (Some mailbox) ->
       f_auth_some hostname store banner_time mailbox cmd
     | Disconnected ->
-      Lwt.return ((hostname, Disconnected, banner_time, store), Reply.internal_error)
+      Lwt.return ((hostname, Disconnected, banner_time, store), Reply.Common.internal_error)
     | Transaction _ ->
-      Lwt.return ((hostname, Disconnected, banner_time, store), Reply.internal_error)
+      Lwt.return ((hostname, Disconnected, banner_time, store), Reply.Common.internal_error)
     (*| Update _ ->
       Lwt.return ((Disconnected, banner_time, store), Reply.internal_error)*)
 end

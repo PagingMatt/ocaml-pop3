@@ -83,48 +83,66 @@ module Authorization = struct
       TestStateA.start hostname maildrop
       >>= fun s -> TestStateA.f s cmd_apop
       >|= fun (_,r) ->
-        Alcotest.(check string) "Checking reply."
-          "+OK 123" (Pop3.Reply.string_of_t r)
+        match Pop3.Reply.lines_of_t r with
+        | l::[] ->
+          Alcotest.(check string) "Checking reply."
+            "+OK 123" l
+        | _ -> Alcotest.fail "Unexpected reply lines pattern."
 
     let f_auth_none_apop_err_reply switch () =
       Lwt_switch.add_hook (Some switch) (fun () -> Lwt.return ());
       TestStateB.start hostname maildrop
       >>= fun s -> TestStateB.f s cmd_apop
       >|= fun (_,r) ->
-        Alcotest.(check string) "Checking reply."
-          "-ERR" (Pop3.Reply.string_of_t r)
+        match Pop3.Reply.lines_of_t r with
+        | l::[] ->
+          Alcotest.(check string) "Checking reply."
+            "-ERR" l
+        | _ -> Alcotest.fail "Unexpected reply lines pattern."
 
     let f_auth_none_apop_err_reply' switch () =
       Lwt_switch.add_hook (Some switch) (fun () -> Lwt.return ());
       TestStateErr.start hostname maildrop
       >>= fun s -> TestStateErr.f s cmd_apop
       >|= fun (_,r) ->
-        Alcotest.(check string) "Checking reply."
-          "-ERR" (Pop3.Reply.string_of_t r)
+        match Pop3.Reply.lines_of_t r with
+        | l::[] ->
+          Alcotest.(check string) "Checking reply."
+            "-ERR" l
+        | _ -> Alcotest.fail "Unexpected reply lines pattern."
 
     let f_auth_none_quit_ok_reply switch () =
       Lwt_switch.add_hook (Some switch) (fun () -> Lwt.return ());
       TestStateA.start hostname maildrop
       >>= fun s -> TestStateA.f s cmd_quit
       >|= fun (_,r) ->
-        Alcotest.(check string) "Checking reply."
-          "+OK" (Pop3.Reply.string_of_t r)
+        match Pop3.Reply.lines_of_t r with
+        | l::[] ->
+          Alcotest.(check string) "Checking reply."
+            "+OK" l
+        | _ -> Alcotest.fail "Unexpected reply lines pattern."
 
     let f_auth_none_user_ok_mailbox_reply switch () =
       Lwt_switch.add_hook (Some switch) (fun () -> Lwt.return ());
       TestStateA.start hostname maildrop
       >>= fun s -> TestStateA.f s cmd_user
       >|= fun (_,r) ->
-        Alcotest.(check string) "Checking reply."
-          "+OK 123" (Pop3.Reply.string_of_t r)
+        match Pop3.Reply.lines_of_t r with
+        | l::[] ->
+          Alcotest.(check string) "Checking reply."
+            "+OK 123" l
+        | _ -> Alcotest.fail "Unexpected reply lines pattern."
 
     let f_auth_none_other_cmd_err_reply cmd switch () =
       Lwt_switch.add_hook (Some switch) (fun () -> Lwt.return ());
       TestStateA.start hostname maildrop
       >>= fun s -> TestStateA.f s cmd
       >|= fun (_,r) ->
-        Alcotest.(check string) "Checking reply."
-          "-ERR" (Pop3.Reply.string_of_t r)
+        match Pop3.Reply.lines_of_t r with
+        | l::[] ->
+          Alcotest.(check string) "Checking reply."
+            "-ERR" l
+        | _ -> Alcotest.fail "Unexpected reply lines pattern."
 
     let unit_tests = [
       Alcotest_lwt.test_case "Check reply from valid APOP command in 'Authorization None'."                            `Quick (f_auth_none_apop_ok_mailbox_reply);
@@ -155,8 +173,11 @@ module Authorization = struct
       >>= fun s -> TestStateA.f s cmd_user
       >>= fun (s',_) -> TestStateA.f s' cmd_pass
       >|= fun (_ ,r) ->
-        Alcotest.(check string) "Checking reply."
-          "+OK 123" (Pop3.Reply.string_of_t r)
+      match Pop3.Reply.lines_of_t r with
+        | l::[] ->
+          Alcotest.(check string) "Checking reply."
+            "+OK 123" l
+        | _ -> Alcotest.fail "Unexpected reply lines pattern."
 
     let f_auth_some_pass_err_reply switch () =
       Lwt_switch.add_hook (Some switch) (fun () -> Lwt.return ());
@@ -164,8 +185,11 @@ module Authorization = struct
       >>= fun s -> TestStateB.f s cmd_user
       >>= fun (s',_) -> TestStateB.f s' cmd_pass
       >|= fun (_ ,r) ->
-        Alcotest.(check string) "Checking reply."
-          "-ERR" (Pop3.Reply.string_of_t r)
+      match Pop3.Reply.lines_of_t r with
+        | l::[] ->
+          Alcotest.(check string) "Checking reply."
+            "-ERR" l
+        | _ -> Alcotest.fail "Unexpected reply lines pattern."
 
     let f_auth_some_pass_err_reply' switch () =
       Lwt_switch.add_hook (Some switch) (fun () -> Lwt.return ());
@@ -173,8 +197,11 @@ module Authorization = struct
       >>= fun s -> TestStateErr.f s cmd_user
       >>= fun (s',_) -> TestStateErr.f s' cmd_pass
       >|= fun (_ ,r) ->
-        Alcotest.(check string) "Checking reply."
-          "-ERR" (Pop3.Reply.string_of_t r)
+      match Pop3.Reply.lines_of_t r with
+        | l::[] ->
+          Alcotest.(check string) "Checking reply."
+            "-ERR" l
+        | _ -> Alcotest.fail "Unexpected reply lines pattern."
 
     let f_auth_some_quit_ok_reply switch () =
       Lwt_switch.add_hook (Some switch) (fun () -> Lwt.return ());
@@ -182,8 +209,11 @@ module Authorization = struct
       >>= fun s -> TestStateA.f s cmd_user
       >>= fun (s',_) -> TestStateA.f s' cmd_quit
       >|= fun (_ ,r) ->
-        Alcotest.(check string) "Checking reply."
-          "+OK" (Pop3.Reply.string_of_t r)
+      match Pop3.Reply.lines_of_t r with
+        | l::[] ->
+          Alcotest.(check string) "Checking reply."
+            "+OK" l
+        | _ -> Alcotest.fail "Unexpected reply lines pattern."
 
     let f_auth_some_other_cmd_err_reply cmd switch () =
       Lwt_switch.add_hook (Some switch) (fun () -> Lwt.return ());
@@ -191,8 +221,11 @@ module Authorization = struct
       >>= fun s -> TestStateA.f s cmd_user
       >>= fun (s',_) -> TestStateA.f s' cmd
       >|= fun (_ ,r) ->
-        Alcotest.(check string) "Checking reply."
-          "-ERR" (Pop3.Reply.string_of_t r)
+      match Pop3.Reply.lines_of_t r with
+        | l::[] ->
+          Alcotest.(check string) "Checking reply."
+            "-ERR" l
+        | _ -> Alcotest.fail "Unexpected reply lines pattern."
 
     let unit_tests = [
       Alcotest_lwt.test_case "Check reply from invalid APOP command in 'Authorization (Some mailbox)'."                      `Quick (f_auth_some_other_cmd_err_reply cmd_apop);

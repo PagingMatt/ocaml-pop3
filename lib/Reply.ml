@@ -10,17 +10,22 @@ let build_first_line indicator msg =
   if msg = "" then indicator else
   String.concat " " [indicator; msg]
 
-let string_of_t reply =
+let lines_of_t reply =
   match reply with
-  | Error None           -> string_of_error
-  | Error (Some msg)     -> build_first_line string_of_error msg
-  | Ok (None, lines)     -> String.concat "\r\n" (string_of_ok::lines)
-  | Ok (Some msg, lines) ->
-    String.concat "\r\n" ((build_first_line string_of_ok msg)::lines)
+  | Error None           -> [string_of_error]
+  | Error (Some msg)     -> [build_first_line string_of_error msg]
+  | Ok (None, lines)     -> string_of_ok::lines
+  | Ok (Some msg, lines) -> (build_first_line string_of_ok msg)::lines
 
-let greeting = Ok ((Some "greetings from OCaml POP3"), [])
+module Common : sig
+  val greeting : t
 
-let internal_error = Error None
+  val internal_error : t
+end = struct
+  let greeting = Ok ((Some "greetings from OCaml POP3"), [])
+
+  let internal_error = Error None
+end
 
 let ok fl ls = Ok (fl, ls)
 

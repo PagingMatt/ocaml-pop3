@@ -1,24 +1,26 @@
 (** Replies from POP3 server to client commands. *)
 
-(** Replies themselves are a variant of '+OK' and '-ERR' with additional
-    messages attached. *)
+(** Reply type. *)
 type t
 
-(** Serializes values of [t] according to RFC specifications.
+(** Serializes values of [t] according to RFC specifications. Each list element
+    corresponds to a line in the reply. The first list element will always
+    include the status indicator for the reply.
 
     @return '+OK ...' or '-ERR ...'. *)
-val string_of_t : t -> string
+val lines_of_t : t -> string list
 
-(** Greeting from server when a new client connects. *)
-val greeting : t
+(** Common replies. *)
+module Common : sig
+  (** Greeting from server when a new client connects. *)
+  val greeting : t
 
-(** Reply value to indicate an internal server error. *)
-val internal_error : t
+  (** Reply value to indicate an internal server error. *)
+  val internal_error : t
+end
 
-(** In the '+OK' case there is an optional first line message and a list of
-      additional message lines. *)
+(** Constructor for '+OK ...' replies. *)
 val ok : string option -> string list -> t
 
-(** In the '-ERR' case there is an optional first line message, but no
-      subsequent message lines. *)
+(** Constructor for '-ERR ...' replies. *)
 val err : string option -> t

@@ -1,20 +1,21 @@
 open Lwt.Infix
 open Store
-open Unix
 
 module type Banner = sig
-  val time : unit -> tm
+  val time : unit -> Unix.tm
 end
 
 module GmTimeBanner : Banner = struct
   let time () =
-    time () |> gmtime
+    Unix.time () |> Unix.gmtime
 end
 
 module type State = sig
   type t
 
   val start : string -> string -> t Lwt.t
+
+  val banner_time : t -> Unix.tm
 
   val terminated : t -> bool
 
@@ -30,11 +31,13 @@ module BackingStoreState (B : Banner) (S : Store) : State = struct
     | Transaction   of string
     (*| Update        of string*)
 
-  type t = string * pop3_session_state * tm * S.t
+  type t = string * pop3_session_state * Unix.tm * S.t
 
   let start h p =
     S.init p
     >|= fun store -> (h, Authorization None, B.time (), store)
+
+  let banner_time (_,_,t,_) = t
 
   let terminated (_,s,_,_) = (s = Disconnected)
 

@@ -4,11 +4,9 @@ open Pop3.State
 open Pop3.Store
 
 module Helpers = struct
-  let digest = "<1514764801.0@>abc"
-
+  let digest  = "<1514764801.0@>abc"
   let mailbox = "123"
-
-  let secret = "abc"
+  let secret  = "abc"
 
   module ConstBanner : Banner = struct
     let time () = Unix.gmtime 1514764801.0
@@ -41,6 +39,21 @@ module Helpers = struct
   module TestOkState = BackingStoreState (ConstBanner) (NoopOkStore)
 
   module TestErrState = BackingStoreState (ConstBanner) (NoopErrStore)
+
+  let cmd_apop  = Apop (mailbox, digest)
+  let cmd_dele  = Dele 0
+  let cmd_list  = List None
+  let cmd_list' = List (Some 0)
+  let cmd_noop  = Noop
+  let cmd_pass  = Pass secret
+  let cmd_quit  = Quit
+  let cmd_retr  = Retr 0
+  let cmd_rset  = Rset
+  let cmd_stat  = Stat
+  let cmd_top   = Top (0, 1)
+  let cmd_uidl  = Uidl None
+  let cmd_uidl' = Uidl (Some 0)
+  let cmd_user  = User mailbox
 end
 
 module Authorization = struct
@@ -49,27 +62,24 @@ module Authorization = struct
 
     let f_auth_none_apop_ok_mailbox_reply switch () =
       Lwt_switch.add_hook (Some switch) (fun () -> Lwt.return ());
-      let cmd = Apop (mailbox, digest) in
       TestOkState.start ""
-      >>= fun s -> TestOkState.f s cmd
+      >>= fun s -> TestOkState.f s cmd_apop
       >|= fun (_,r) ->
         Alcotest.(check string) "Checking reply."
           "+OK 123" (Pop3.Reply.string_of_t r)
 
     let f_auth_none_pass_err_reply switch () =
       Lwt_switch.add_hook (Some switch) (fun () -> Lwt.return ());
-      let cmd = Pass secret in
       TestOkState.start ""
-      >>= fun s -> TestOkState.f s cmd
+      >>= fun s -> TestOkState.f s cmd_pass
       >|= fun (_,r) ->
         Alcotest.(check string) "Checking reply."
           "-ERR" (Pop3.Reply.string_of_t r)
 
     let f_auth_none_user_ok_mailbox_reply switch () =
       Lwt_switch.add_hook (Some switch) (fun () -> Lwt.return ());
-      let cmd = User mailbox in
       TestOkState.start ""
-      >>= fun s -> TestOkState.f s cmd
+      >>= fun s -> TestOkState.f s cmd_user
       >|= fun (_,r) ->
         Alcotest.(check string) "Checking reply."
           "+OK 123" (Pop3.Reply.string_of_t r)
@@ -86,8 +96,6 @@ module Authorization = struct
 
     let f_auth_some_apop_err_reply switch () =
       Lwt_switch.add_hook (Some switch) (fun () -> Lwt.return ());
-      let cmd_user = User mailbox in
-      let cmd_apop = Apop (mailbox, digest) in
       TestOkState.start ""
       >>= fun s -> TestOkState.f s cmd_user
       >>= fun (s',_) -> TestOkState.f s' cmd_apop
@@ -97,8 +105,6 @@ module Authorization = struct
 
     let f_auth_some_pass_ok_mailbox_reply switch () =
       Lwt_switch.add_hook (Some switch) (fun () -> Lwt.return ());
-      let cmd_user = User mailbox in
-      let cmd_pass = Pass secret in
       TestOkState.start ""
       >>= fun s -> TestOkState.f s cmd_user
       >>= fun (s',_) -> TestOkState.f s' cmd_pass
@@ -108,7 +114,6 @@ module Authorization = struct
 
     let f_auth_some_user_err_reply switch () =
       Lwt_switch.add_hook (Some switch) (fun () -> Lwt.return ());
-      let cmd_user = User mailbox in
       TestOkState.start ""
       >>= fun s -> TestOkState.f s cmd_user
       >>= fun (s',_) -> TestOkState.f s' cmd_user

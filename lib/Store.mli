@@ -26,3 +26,7 @@ module type Store = sig
               mailbox.*)
   val apop_of_mailbox : t -> Unix.tm -> string -> string -> string option Lwt.t
 end
+
+(** The [IrminStore] module is an implementation of the [Store] signature which
+    uses Irmin for the underlying store. *)
+module IrminStore : Store

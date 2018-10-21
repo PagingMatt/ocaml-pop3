@@ -14,7 +14,7 @@ install:
   - sh: opam switch 4.07.0
   - sh: eval `opam config env`
 before_build:
-  - sh: opam install -y conduit-lwt-unix dune irmin-unix odoc tcpip
+  - sh: opam install -y conduit-lwt-unix dune irmin-unix odoc
 build_script:
   - sh: dune build
   - sh: dune build @doc

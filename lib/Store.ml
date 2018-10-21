@@ -11,17 +11,17 @@ module type Store = sig
 end
 
 module IrminStore : Store = struct
-  module IrminMenSecretStore = Irmin_unix.Git.FS.KV(Irmin.Contents.String)
+  module IrminGitFsKvStore = Irmin_unix.Git.FS.KV(Irmin.Contents.String)
 
-  type t = IrminMenSecretStore.t
+  type t = IrminGitFsKvStore.t
 
   let init p =
     Irmin_git.config ~bare:true p
-    |> IrminMenSecretStore.Repo.v
-    >>= IrminMenSecretStore.master
+    |> IrminGitFsKvStore.Repo.v
+    >>= IrminGitFsKvStore.master
 
   let secret_of_mailbox s m =
-    IrminMenSecretStore.find s ["secrets"; m]
+    IrminGitFsKvStore.find s ["secrets"; m]
 
   let apop_of_mailbox s t h m =
     secret_of_mailbox s m

@@ -4,11 +4,12 @@ open Pop3.State
 open Pop3.Store
 
 module Helpers = struct
-  let digest  = "<1514764801.0@>abc"
-  let digest' = "<1514764801.0@>def"
-  let mailbox = "123"
-  let secret  = "abc"
-  let secret' = "def"
+  let digest   = "<1514764801.0@localhost>abc"
+  let digest'  = "<1514764801.0@localhost>def"
+  let hostname = "localhost"
+  let mailbox  = "123"
+  let secret   = "abc"
+  let secret'  = "def"
 
   module ConstBanner : Banner = struct
     let time () = Unix.gmtime 1514764801.0
@@ -78,7 +79,7 @@ module Authorization = struct
 
     let f_auth_none_apop_ok_mailbox_reply switch () =
       Lwt_switch.add_hook (Some switch) (fun () -> Lwt.return ());
-      TestStateA.start "" ""
+      TestStateA.start hostname ""
       >>= fun s -> TestStateA.f s cmd_apop
       >|= fun (_,r) ->
         Alcotest.(check string) "Checking reply."
@@ -86,7 +87,7 @@ module Authorization = struct
 
     let f_auth_none_apop_err_reply switch () =
       Lwt_switch.add_hook (Some switch) (fun () -> Lwt.return ());
-      TestStateB.start "" ""
+      TestStateB.start hostname ""
       >>= fun s -> TestStateB.f s cmd_apop
       >|= fun (_,r) ->
         Alcotest.(check string) "Checking reply."
@@ -94,7 +95,7 @@ module Authorization = struct
 
     let f_auth_none_apop_err_reply' switch () =
       Lwt_switch.add_hook (Some switch) (fun () -> Lwt.return ());
-      TestStateErr.start "" ""
+      TestStateErr.start hostname ""
       >>= fun s -> TestStateErr.f s cmd_apop
       >|= fun (_,r) ->
         Alcotest.(check string) "Checking reply."
@@ -102,7 +103,7 @@ module Authorization = struct
 
     let f_auth_none_quit_ok_reply switch () =
       Lwt_switch.add_hook (Some switch) (fun () -> Lwt.return ());
-      TestStateA.start "" ""
+      TestStateA.start hostname ""
       >>= fun s -> TestStateA.f s cmd_quit
       >|= fun (_,r) ->
         Alcotest.(check string) "Checking reply."
@@ -110,7 +111,7 @@ module Authorization = struct
 
     let f_auth_none_user_ok_mailbox_reply switch () =
       Lwt_switch.add_hook (Some switch) (fun () -> Lwt.return ());
-      TestStateA.start "" ""
+      TestStateA.start hostname ""
       >>= fun s -> TestStateA.f s cmd_user
       >|= fun (_,r) ->
         Alcotest.(check string) "Checking reply."
@@ -118,7 +119,7 @@ module Authorization = struct
 
     let f_auth_none_other_cmd_err_reply cmd switch () =
       Lwt_switch.add_hook (Some switch) (fun () -> Lwt.return ());
-      TestStateA.start "" ""
+      TestStateA.start hostname ""
       >>= fun s -> TestStateA.f s cmd
       >|= fun (_,r) ->
         Alcotest.(check string) "Checking reply."
@@ -149,7 +150,7 @@ module Authorization = struct
 
     let f_auth_some_pass_ok_mailbox_reply switch () =
       Lwt_switch.add_hook (Some switch) (fun () -> Lwt.return ());
-      TestStateA.start "" ""
+      TestStateA.start hostname ""
       >>= fun s -> TestStateA.f s cmd_user
       >>= fun (s',_) -> TestStateA.f s' cmd_pass
       >|= fun (_ ,r) ->
@@ -158,7 +159,7 @@ module Authorization = struct
 
     let f_auth_some_pass_err_reply switch () =
       Lwt_switch.add_hook (Some switch) (fun () -> Lwt.return ());
-      TestStateB.start "" ""
+      TestStateB.start hostname ""
       >>= fun s -> TestStateB.f s cmd_user
       >>= fun (s',_) -> TestStateB.f s' cmd_pass
       >|= fun (_ ,r) ->
@@ -167,7 +168,7 @@ module Authorization = struct
 
     let f_auth_some_pass_err_reply' switch () =
       Lwt_switch.add_hook (Some switch) (fun () -> Lwt.return ());
-      TestStateErr.start "" ""
+      TestStateErr.start hostname ""
       >>= fun s -> TestStateErr.f s cmd_user
       >>= fun (s',_) -> TestStateErr.f s' cmd_pass
       >|= fun (_ ,r) ->
@@ -176,7 +177,7 @@ module Authorization = struct
 
     let f_auth_some_quit_ok_reply switch () =
       Lwt_switch.add_hook (Some switch) (fun () -> Lwt.return ());
-      TestStateA.start "" ""
+      TestStateA.start hostname ""
       >>= fun s -> TestStateA.f s cmd_user
       >>= fun (s',_) -> TestStateA.f s' cmd_quit
       >|= fun (_ ,r) ->
@@ -185,7 +186,7 @@ module Authorization = struct
 
     let f_auth_some_other_cmd_err_reply cmd switch () =
       Lwt_switch.add_hook (Some switch) (fun () -> Lwt.return ());
-      TestStateA.start "" ""
+      TestStateA.start hostname ""
       >>= fun s -> TestStateA.f s cmd_user
       >>= fun (s',_) -> TestStateA.f s' cmd
       >|= fun (_ ,r) ->

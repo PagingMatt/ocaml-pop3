@@ -22,10 +22,14 @@ end = struct
       >>= fun () -> iter_state input_channel output_channel state')
 
   let callback hostname maildrop _flow input_channel output_channel =
-    Lwt_list.iter_s (Lwt_io.write_line output_channel)
-      (Reply.Common.greeting |> Reply.lines_of_t)
-    >>= fun () -> S.start hostname maildrop
-    >>= iter_state input_channel output_channel
+    S.start hostname maildrop
+    >>= fun state -> (
+      S.banner_time state
+      |> Reply.Common.greeting hostname
+      |> Reply.lines_of_t
+      |> Lwt_list.iter_s (Lwt_io.write_line output_channel)
+      >>= fun () -> iter_state input_channel output_channel state
+    )
 
   let start ~hostname ~maildrop ~stop =
     let ctx = default_ctx in

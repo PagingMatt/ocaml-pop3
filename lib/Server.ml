@@ -6,6 +6,7 @@ open State
 module Server (S : State) : sig
   val start : unit Lwt.t -> unit Lwt.t
 end = struct
+  let hostname = ""
   let maildrop = ""
 
   let rec iter_state input_channel output_channel state =
@@ -22,7 +23,7 @@ end = struct
 
   let callback _flow input_channel output_channel =
     Lwt_io.write output_channel (Reply.greeting |> Reply.string_of_t)
-    >>= fun () -> S.start maildrop
+    >>= fun () -> S.start hostname maildrop
     >>= iter_state input_channel output_channel
 
   let start (stop:unit Lwt.t) =

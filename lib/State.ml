@@ -102,9 +102,17 @@ module BackingStoreState (B : Banner) (S : Store) : State = struct
   let trans_quit hostname store banner_time mailbox =
     ((hostname, Update mailbox, banner_time, store), Reply.ok None [])
 
+  let trans_retr hostname store banner_time mailbox msg =
+    S.read store mailbox msg
+    >|= fun ls_option ->
+      match ls_option with
+      | None -> trans_fail hostname store banner_time mailbox
+      | Some ls -> Reply.ok (Some "-1 octets") ls
+
   let f_trans hostname store banner_time mailbox cmd =
     match cmd with
     | Quit -> Lwt.return (trans_quit hostname store banner_time mailbox)
+    | Retr msg -> trans_retr hostname store banner_time mailbox msg
     | _ -> Lwt.return (trans_fail hostname store banner_time mailbox)
 
   let f (hostname, state, banner_time, store) cmd =

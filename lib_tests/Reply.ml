@@ -51,7 +51,7 @@ let lines_of_t_ok_some_lines () =
   | _ -> Alcotest.fail "Unexpected line pattern."
 
 let internal_error_is_error_none () =
-  match internal_error |> lines_of_t with
+  match Common.internal_error |> lines_of_t with
   | l::[] ->
     Alcotest.(check string) "Checking 'internal_error' is 'Error None'."
       "-ERR" l

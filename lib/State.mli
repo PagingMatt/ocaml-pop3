@@ -20,9 +20,9 @@ module type State = sig
   (** Create a new POP3 session state machine.
 
     @return a new state machine [t] in the initial [Authorization] state with a
-            current 'banner time'. The [string] parameter is used to for
-            initializing the maildrop. *)
-  val start : string -> t Lwt.t
+            current 'banner time'. The first [string] parameter is used for the
+            hostname and the second is for initializing the maildrop. *)
+  val start : string -> string -> t Lwt.t
 
   (** Predicate to determine if state is terminated. *)
   val terminated : t -> bool

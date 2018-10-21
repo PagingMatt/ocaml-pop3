@@ -24,7 +24,7 @@ end = struct
     >>= fun () -> S.start hostname maildrop
     >>= iter_state input_channel output_channel
 
-  let start (~hostname:string) (~maildrop:string) (~stop:unit Lwt.t) =
+  let start ~hostname ~maildrop ~stop =
     let ctx = default_ctx in
     let mode = `TCP (`Port 110) in
     Conduit_lwt_unix.serve ~stop ~ctx ~mode (callback hostname maildrop)

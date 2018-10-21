@@ -12,8 +12,9 @@ val lines_of_t : t -> string list
 
 (** Common replies. *)
 module Common : sig
-  (** Greeting from server when a new client connects. *)
-  val greeting : t
+  (** Greeting from server when a new client connects. The greeting is dependent
+      on the banner time of the session and the hostname of the server. *)
+  val greeting : string -> Unix.tm -> t
 
   (** Reply value to indicate an internal server error. *)
   val internal_error : t

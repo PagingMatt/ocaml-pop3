@@ -42,15 +42,21 @@ module BackingStoreState (B : Banner) (S : Store) : State = struct
   let terminated (_,s,_,_) = (s = Disconnected)
 
   let auth_fail hostname store banner_time =
-    ((hostname, Authorization None, banner_time, store), Reply.err None)
+    ((hostname, Authorization None, banner_time, store),
+      Reply.err (Some "permission denied"))
+
+  let auth_invalid_cmd hostname store banner_time =
+    ((hostname, Authorization None, banner_time, store),
+      Reply.err (Some "command invalid before authorized"))
 
   let auth_quit hostname store banner_time =
-    ((hostname, Disconnected, banner_time, store), Reply.ok None [])
+    ((hostname, Disconnected, banner_time, store),
+      Reply.ok (Some (Printf.sprintf "%s POP3 server signing off" hostname)) [])
 
   let auth_result hostname store banner_time mailbox success =
     if success then
       ((hostname, Transaction mailbox, banner_time, store),
-        Reply.ok (Some mailbox) [])
+        Reply.ok (Some "maildrop locked and ready") [])
     else auth_fail hostname store banner_time
 
   let auth_apop hostname store banner_time mailbox digest =
@@ -62,7 +68,10 @@ module BackingStoreState (B : Banner) (S : Store) : State = struct
       | Some digest' ->
         auth_result hostname store banner_time mailbox (digest = digest')
 
-  let auth_pass hostname store banner_time mailbox secret =
+  let auth_pass hostname store banner_time mailbox_opt secret =
+    match mailbox_opt with
+    | None -> Lwt.return (auth_fail hostname store banner_time)
+    | Some mailbox ->
     S.secret_of_mailbox store mailbox
     >|= fun secret_option ->
       match secret_option with
@@ -76,25 +85,23 @@ module BackingStoreState (B : Banner) (S : Store) : State = struct
       ((hostname, Authorization (Some mailbox), banner_time, store),
         Reply.ok (Some mailbox) [])
 
-  let f_auth_none hostname store banner_time cmd =
+  let f_auth hostname store banner_time mailbox cmd =
     match cmd with
-    | Apop (mailbox, digest) ->
-      auth_apop hostname store banner_time mailbox digest
-    | Quit ->
-      Lwt.return (auth_quit hostname store banner_time)
-    | User mailbox ->
-      auth_user hostname store banner_time mailbox
-    | _ ->
-      Lwt.return (auth_fail hostname store banner_time)
-
-  let f_auth_some hostname store banner_time mailbox cmd =
-    match cmd with
+    | Apop (mailbox', digest) ->
+      (* Attempt to verify digest, if this fails reset memoized mailbox. *)
+      auth_apop hostname store banner_time mailbox' digest
     | Pass secret ->
+      (* Attempt to verify secret for memoized mailbox. *)
       auth_pass hostname store banner_time mailbox secret
     | Quit ->
+      (* Terminate the session. *)
       Lwt.return (auth_quit hostname store banner_time)
+    | User mailbox' ->
+      (* Reset memoized mailbox and return +OK ready for PASS command. *)
+      auth_user hostname store banner_time mailbox'
     | _ ->
-      Lwt.return (auth_fail hostname store banner_time)
+      (* Other commands are invalid in Authorization state. *)
+      Lwt.return (auth_invalid_cmd hostname store banner_time)
 
   let trans_fail hostname store banner_time mailbox =
     ((hostname, Transaction mailbox, banner_time, store), Reply.err None)
@@ -119,10 +126,8 @@ module BackingStoreState (B : Banner) (S : Store) : State = struct
 
   let f (hostname, state, banner_time, store) cmd =
     match state with
-    | Authorization None ->
-      f_auth_none hostname store banner_time cmd
-    | Authorization (Some mailbox) ->
-      f_auth_some hostname store banner_time mailbox cmd
+    | Authorization mailbox ->
+      f_auth hostname store banner_time mailbox cmd
     | Disconnected ->
       Lwt.return ((hostname, Disconnected, banner_time, store), Reply.Common.internal_error)
     | Transaction mailbox ->

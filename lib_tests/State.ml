@@ -8,6 +8,7 @@ module Helpers = struct
   let digest'  = "<1514764801.0@localhost>def"
   let hostname = "localhost"
   let mailbox  = "123"
+  let mailbox' = "456"
   let maildrop = "/tmp/pop3"
   let secret   = "abc"
   let secret'  = "def"
@@ -81,6 +82,7 @@ module Helpers = struct
   let cmd_uidl  = Uidl None
   let cmd_uidl' = Uidl (Some 0)
   let cmd_user  = User mailbox
+  let cmd_user' = User mailbox'
 end
 
 module Authorization = struct
@@ -95,7 +97,7 @@ module Authorization = struct
         match Pop3.Reply.lines_of_t r with
         | l::[] ->
           Alcotest.(check string) "Checking reply."
-            "+OK 123" l
+            "+OK maildrop locked and ready" l
         | _ -> Alcotest.fail "Unexpected reply lines pattern."
 
     let f_auth_none_apop_err_reply switch () =
@@ -106,7 +108,7 @@ module Authorization = struct
         match Pop3.Reply.lines_of_t r with
         | l::[] ->
           Alcotest.(check string) "Checking reply."
-            "-ERR" l
+            "-ERR permission denied" l
         | _ -> Alcotest.fail "Unexpected reply lines pattern."
 
     let f_auth_none_apop_err_reply' switch () =
@@ -117,7 +119,18 @@ module Authorization = struct
         match Pop3.Reply.lines_of_t r with
         | l::[] ->
           Alcotest.(check string) "Checking reply."
-            "-ERR" l
+            "-ERR permission denied" l
+        | _ -> Alcotest.fail "Unexpected reply lines pattern."
+
+    let f_auth_none_pass_err_reply switch () =
+      Lwt_switch.add_hook (Some switch) (fun () -> Lwt.return ());
+      TestStateA.start hostname maildrop
+      >>= fun s -> TestStateA.f s cmd_pass
+      >|= fun (_,r) ->
+        match Pop3.Reply.lines_of_t r with
+        | l::[] ->
+          Alcotest.(check string) "Checking reply."
+            "-ERR permission denied" l
         | _ -> Alcotest.fail "Unexpected reply lines pattern."
 
     let f_auth_none_quit_ok_reply switch () =
@@ -128,7 +141,7 @@ module Authorization = struct
         match Pop3.Reply.lines_of_t r with
         | l::[] ->
           Alcotest.(check string) "Checking reply."
-            "+OK" l
+            "+OK localhost POP3 server signing off" l
         | _ -> Alcotest.fail "Unexpected reply lines pattern."
 
     let f_auth_none_user_ok_mailbox_reply switch () =
@@ -150,7 +163,7 @@ module Authorization = struct
         match Pop3.Reply.lines_of_t r with
         | l::[] ->
           Alcotest.(check string) "Checking reply."
-            "-ERR" l
+            "-ERR command invalid before authorized" l
         | _ -> Alcotest.fail "Unexpected reply lines pattern."
 
     let unit_tests = [
@@ -162,7 +175,7 @@ module Authorization = struct
       Alcotest_lwt.test_case "Check reply from invalid LIST (Some) command in 'Authorization None'."                   `Quick (f_auth_none_other_cmd_err_reply cmd_list');
       Alcotest_lwt.test_case "Check reply from invalid NOOP command in 'Authorization None'."                          `Quick (f_auth_none_other_cmd_err_reply cmd_noop);
       Alcotest_lwt.test_case "Check reply from valid QUIT command in 'Authorization None'."                            `Quick (f_auth_none_quit_ok_reply);
-      Alcotest_lwt.test_case "Check reply from invalid PASS command in 'Authorization None'."                          `Quick (f_auth_none_other_cmd_err_reply cmd_pass);
+      Alcotest_lwt.test_case "Check reply from invalid PASS command in 'Authorization None'."                          `Quick (f_auth_none_pass_err_reply);
       Alcotest_lwt.test_case "Check reply from invalid RETR command in 'Authorization None'."                          `Quick (f_auth_none_other_cmd_err_reply cmd_retr);
       Alcotest_lwt.test_case "Check reply from invalid RSET command in 'Authorization None'."                          `Quick (f_auth_none_other_cmd_err_reply cmd_rset);
       Alcotest_lwt.test_case "Check reply from invalid STAT command in 'Authorization None'."                          `Quick (f_auth_none_other_cmd_err_reply cmd_stat);
@@ -176,6 +189,42 @@ module Authorization = struct
   module Some = struct
     open Helpers
 
+    let f_auth_some_apop_ok_mailbox_reply switch () =
+      Lwt_switch.add_hook (Some switch) (fun () -> Lwt.return ());
+      TestStateA.start hostname maildrop
+      >>= fun s -> TestStateA.f s cmd_user
+      >>= fun (s',_) -> TestStateA.f s' cmd_apop
+      >|= fun (_ ,r) ->
+        match Pop3.Reply.lines_of_t r with
+        | l::[] ->
+          Alcotest.(check string) "Checking reply."
+            "+OK maildrop locked and ready" l
+        | _ -> Alcotest.fail "Unexpected reply lines pattern."
+
+    let f_auth_some_apop_err_reply switch () =
+      Lwt_switch.add_hook (Some switch) (fun () -> Lwt.return ());
+      TestStateB.start hostname maildrop
+      >>= fun s -> TestStateB.f s cmd_user
+      >>= fun (s',_) -> TestStateB.f s' cmd_apop
+      >|= fun (_ ,r) ->
+        match Pop3.Reply.lines_of_t r with
+        | l::[] ->
+          Alcotest.(check string) "Checking reply."
+            "-ERR permission denied" l
+        | _ -> Alcotest.fail "Unexpected reply lines pattern."
+
+    let f_auth_some_apop_err_reply' switch () =
+      Lwt_switch.add_hook (Some switch) (fun () -> Lwt.return ());
+      TestStateErr.start hostname maildrop
+      >>= fun s -> TestStateErr.f s cmd_user
+      >>= fun (s',_) -> TestStateErr.f s' cmd_apop
+      >|= fun (_ ,r) ->
+        match Pop3.Reply.lines_of_t r with
+        | l::[] ->
+          Alcotest.(check string) "Checking reply."
+            "-ERR permission denied" l
+        | _ -> Alcotest.fail "Unexpected reply lines pattern."
+
     let f_auth_some_pass_ok_mailbox_reply switch () =
       Lwt_switch.add_hook (Some switch) (fun () -> Lwt.return ());
       TestStateA.start hostname maildrop
@@ -185,7 +234,7 @@ module Authorization = struct
       match Pop3.Reply.lines_of_t r with
         | l::[] ->
           Alcotest.(check string) "Checking reply."
-            "+OK 123" l
+            "+OK maildrop locked and ready" l
         | _ -> Alcotest.fail "Unexpected reply lines pattern."
 
     let f_auth_some_pass_err_reply switch () =
@@ -197,7 +246,7 @@ module Authorization = struct
       match Pop3.Reply.lines_of_t r with
         | l::[] ->
           Alcotest.(check string) "Checking reply."
-            "-ERR" l
+            "-ERR permission denied" l
         | _ -> Alcotest.fail "Unexpected reply lines pattern."
 
     let f_auth_some_pass_err_reply' switch () =
@@ -209,7 +258,7 @@ module Authorization = struct
       match Pop3.Reply.lines_of_t r with
         | l::[] ->
           Alcotest.(check string) "Checking reply."
-            "-ERR" l
+            "-ERR permission denied" l
         | _ -> Alcotest.fail "Unexpected reply lines pattern."
 
     let f_auth_some_quit_ok_reply switch () =
@@ -221,7 +270,19 @@ module Authorization = struct
       match Pop3.Reply.lines_of_t r with
         | l::[] ->
           Alcotest.(check string) "Checking reply."
-            "+OK" l
+            "+OK localhost POP3 server signing off" l
+        | _ -> Alcotest.fail "Unexpected reply lines pattern."
+
+    let f_auth_some_user_ok_mailbox_reply switch () =
+      Lwt_switch.add_hook (Some switch) (fun () -> Lwt.return ());
+      TestStateA.start hostname maildrop
+      >>= fun s -> TestStateA.f s cmd_user
+      >>= fun (s',_) -> TestStateA.f s' cmd_user'
+      >|= fun (_ ,r) ->
+        match Pop3.Reply.lines_of_t r with
+        | l::[] ->
+          Alcotest.(check string) "Checking reply."
+            "+OK 456" l
         | _ -> Alcotest.fail "Unexpected reply lines pattern."
 
     let f_auth_some_other_cmd_err_reply cmd switch () =
@@ -233,26 +294,28 @@ module Authorization = struct
       match Pop3.Reply.lines_of_t r with
         | l::[] ->
           Alcotest.(check string) "Checking reply."
-            "-ERR" l
+            "-ERR command invalid before authorized" l
         | _ -> Alcotest.fail "Unexpected reply lines pattern."
 
     let unit_tests = [
-      Alcotest_lwt.test_case "Check reply from invalid APOP command in 'Authorization (Some mailbox)'."                      `Quick (f_auth_some_other_cmd_err_reply cmd_apop);
-      Alcotest_lwt.test_case "Check reply from invalid DELE command in 'Authorization (Some mailbox)'."                      `Quick (f_auth_some_other_cmd_err_reply cmd_dele);
-      Alcotest_lwt.test_case "Check reply from invalid LIST (None) command in 'Authorization (Some mailbox)'."               `Quick (f_auth_some_other_cmd_err_reply cmd_list);
-      Alcotest_lwt.test_case "Check reply from invalid LIST (Some) command in 'Authorization (Some mailbox)'."               `Quick (f_auth_some_other_cmd_err_reply cmd_list');
-      Alcotest_lwt.test_case "Check reply from invalid NOOP command in 'Authorization (Some mailbox)'."                      `Quick (f_auth_some_other_cmd_err_reply cmd_noop);
-      Alcotest_lwt.test_case "Check reply from valid QUIT command in 'Authorization (Some mailbox)'."                        `Quick (f_auth_some_quit_ok_reply);
-      Alcotest_lwt.test_case "Check reply from valid PASS command in 'Authorization (Some mailbox)'."                        `Quick (f_auth_some_pass_ok_mailbox_reply);
-      Alcotest_lwt.test_case "Check reply from invalid PASS command in 'Authorization (Some mailbox)' (wrong secret)."       `Quick (f_auth_some_pass_err_reply);
-      Alcotest_lwt.test_case "Check reply from invalid PASS command in 'Authorization (Some mailbox)' (no secret in store)." `Quick (f_auth_some_pass_err_reply');
-      Alcotest_lwt.test_case "Check reply from invalid RETR command in 'Authorization (Some mailbox)' ."                     `Quick (f_auth_some_other_cmd_err_reply cmd_retr);
-      Alcotest_lwt.test_case "Check reply from invalid RSET command in 'Authorization (Some mailbox)'."                      `Quick (f_auth_some_other_cmd_err_reply cmd_rset);
-      Alcotest_lwt.test_case "Check reply from invalid STAT command in 'Authorization (Some mailbox)'."                      `Quick (f_auth_some_other_cmd_err_reply cmd_stat);
-      Alcotest_lwt.test_case "Check reply from invalid TOP command in 'Authorization (Some mailbox)'."                       `Quick (f_auth_some_other_cmd_err_reply cmd_top);
-      Alcotest_lwt.test_case "Check reply from invalid UIDL (None) command in 'Authorization (Some mailbox)'."               `Quick (f_auth_some_other_cmd_err_reply cmd_uidl);
-      Alcotest_lwt.test_case "Check reply from invalid UIDL (Some) command in 'Authorization (Some mailbox)'."               `Quick (f_auth_some_other_cmd_err_reply cmd_uidl');
-      Alcotest_lwt.test_case "Check reply from invalid USER command in 'Authorization (Some mailbox)'."                      `Quick (f_auth_some_other_cmd_err_reply cmd_user);
+      Alcotest_lwt.test_case "Check reply from valid APOP command in 'Authorization (Some mailbox)'."                            `Quick (f_auth_some_apop_ok_mailbox_reply);
+      Alcotest_lwt.test_case "Check reply from invalid APOP command in 'Authorization (Some mailbox)' (wrong secret in digest)." `Quick (f_auth_some_apop_err_reply);
+      Alcotest_lwt.test_case "Check reply from invalid APOP command in 'Authorization (Some mailbox)' (no secret in store)."     `Quick (f_auth_some_apop_err_reply');
+      Alcotest_lwt.test_case "Check reply from invalid DELE command in 'Authorization (Some mailbox)'."                          `Quick (f_auth_some_other_cmd_err_reply cmd_dele);
+      Alcotest_lwt.test_case "Check reply from invalid LIST (None) command in 'Authorization (Some mailbox)'."                   `Quick (f_auth_some_other_cmd_err_reply cmd_list);
+      Alcotest_lwt.test_case "Check reply from invalid LIST (Some) command in 'Authorization (Some mailbox)'."                   `Quick (f_auth_some_other_cmd_err_reply cmd_list');
+      Alcotest_lwt.test_case "Check reply from invalid NOOP command in 'Authorization (Some mailbox)'."                          `Quick (f_auth_some_other_cmd_err_reply cmd_noop);
+      Alcotest_lwt.test_case "Check reply from valid QUIT command in 'Authorization (Some mailbox)'."                            `Quick (f_auth_some_quit_ok_reply);
+      Alcotest_lwt.test_case "Check reply from valid PASS command in 'Authorization (Some mailbox)'."                            `Quick (f_auth_some_pass_ok_mailbox_reply);
+      Alcotest_lwt.test_case "Check reply from invalid PASS command in 'Authorization (Some mailbox)' (wrong secret)."           `Quick (f_auth_some_pass_err_reply);
+      Alcotest_lwt.test_case "Check reply from invalid PASS command in 'Authorization (Some mailbox)' (no secret in store)."     `Quick (f_auth_some_pass_err_reply');
+      Alcotest_lwt.test_case "Check reply from invalid RETR command in 'Authorization (Some mailbox)' ."                         `Quick (f_auth_some_other_cmd_err_reply cmd_retr);
+      Alcotest_lwt.test_case "Check reply from invalid RSET command in 'Authorization (Some mailbox)'."                          `Quick (f_auth_some_other_cmd_err_reply cmd_rset);
+      Alcotest_lwt.test_case "Check reply from invalid STAT command in 'Authorization (Some mailbox)'."                          `Quick (f_auth_some_other_cmd_err_reply cmd_stat);
+      Alcotest_lwt.test_case "Check reply from invalid TOP command in 'Authorization (Some mailbox)'."                           `Quick (f_auth_some_other_cmd_err_reply cmd_top);
+      Alcotest_lwt.test_case "Check reply from invalid UIDL (None) command in 'Authorization (Some mailbox)'."                   `Quick (f_auth_some_other_cmd_err_reply cmd_uidl);
+      Alcotest_lwt.test_case "Check reply from invalid UIDL (Some) command in 'Authorization (Some mailbox)'."                   `Quick (f_auth_some_other_cmd_err_reply cmd_uidl');
+      Alcotest_lwt.test_case "Check reply from valid USER command in 'Authorization (Some mailbox)'."                            `Quick (f_auth_some_user_ok_mailbox_reply);
     ]
   end
 end

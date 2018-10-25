@@ -128,7 +128,7 @@ module Authorization = struct
         match Pop3.Reply.lines_of_t r with
         | l::[] ->
           Alcotest.(check string) "Checking reply."
-            "+OK" l
+            "+OK localhost signing off" l
         | _ -> Alcotest.fail "Unexpected reply lines pattern."
 
     let f_auth_none_user_ok_mailbox_reply switch () =
@@ -221,7 +221,7 @@ module Authorization = struct
       match Pop3.Reply.lines_of_t r with
         | l::[] ->
           Alcotest.(check string) "Checking reply."
-            "+OK" l
+            "+OK localhost signing off" l
         | _ -> Alcotest.fail "Unexpected reply lines pattern."
 
     let f_auth_some_other_cmd_err_reply cmd switch () =

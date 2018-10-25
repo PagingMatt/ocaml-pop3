@@ -38,7 +38,7 @@ end = struct
   let on_exn exn =
     match exn with
     (* EOF indicates that the underlying channels are now unavailable after
-       connection closes. *)
+       connection closes from ungraceful client disconnect. *)
     | End_of_file -> ()
     (* Other unexpected exceptions should be re-thrown. *)
     | _ as e      -> raise e

@@ -28,11 +28,23 @@ end = struct
       |> Reply.Common.greeting hostname
       |> Reply.lines_of_t
       |> Lwt_list.iter_s (Lwt_io.write_line output_channel)
-      >>= fun () -> iter_state input_channel output_channel state
-    )
+      >>= fun () ->
+        try
+          iter_state input_channel output_channel state
+        with
+        (* Client has disconnected ungracefully. *)
+        | Unix.Unix_error(Unix.ECONNRESET, _, _) -> Lwt.return ())
+
+  let on_exn exn =
+    match exn with
+    (* EOF indicates that the underlying channels are now unavailable after
+       connection closes from ungraceful client disconnect. *)
+    | End_of_file -> ()
+    (* Other unexpected exceptions should be re-thrown. *)
+    | _ as e      -> raise e
 
   let start ~hostname ~maildrop ~stop =
     let ctx = default_ctx in
     let mode = `TCP (`Port 110) in
-    Conduit_lwt_unix.serve ~stop ~ctx ~mode (callback hostname maildrop)
+    Conduit_lwt_unix.serve ~stop ~on_exn ~ctx ~mode (callback hostname maildrop)
 end

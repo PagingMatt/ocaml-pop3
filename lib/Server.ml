@@ -9,7 +9,7 @@ module Server (S : State) : sig
 end = struct
   let rec iter_state input_channel output_channel state =
     if S.terminated state then Lwt.return () else
-    Lwt_io.read input_channel
+    Lwt_io.read_line input_channel
     >|= Command.t_of_string_opt
     >>= fun cmd_opt ->
       (match cmd_opt with

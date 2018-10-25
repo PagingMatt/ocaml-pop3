@@ -97,10 +97,10 @@ module BackingStoreState (B : Banner) (S : Store) : State = struct
       (* Terminate the session. *)
       Lwt.return (auth_quit hostname store banner_time)
     | User mailbox' ->
-      (* Memoize mailbox and return +OK ready for PASS command. *)
+      (* Reset memoized mailbox and return +OK ready for PASS command. *)
       auth_user hostname store banner_time mailbox'
     | _ ->
-      (* Other commands are invalid in auth state. *)
+      (* Other commands are invalid in Authorization state. *)
       Lwt.return (auth_invalid_cmd hostname store banner_time)
 
   let trans_fail hostname store banner_time mailbox =

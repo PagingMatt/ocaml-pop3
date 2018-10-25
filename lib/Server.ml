@@ -28,8 +28,12 @@ end = struct
       |> Reply.Common.greeting hostname
       |> Reply.lines_of_t
       |> Lwt_list.iter_s (Lwt_io.write_line output_channel)
-      >>= fun () -> iter_state input_channel output_channel state
-    )
+      >>= fun () ->
+        try
+          iter_state input_channel output_channel state
+        with
+        (* Client has disconnected. *)
+        | Unix.Unix_error(Unix.ECONNRESET, _, _) -> Lwt.return ())
 
   let start ~hostname ~maildrop ~stop =
     let ctx = default_ctx in

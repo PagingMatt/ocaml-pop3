@@ -33,11 +33,15 @@ end = struct
           iter_state input_channel output_channel state
         with
         (* Client has disconnected. *)
-        | Unix.Unix_error(Unix.ECONNRESET, _, _) -> Lwt.return ()
-        | End_of_file -> Lwt.return ())
+        | Unix.Unix_error(Unix.ECONNRESET, _, _) -> Lwt.return ())
+
+  let on_exn exn =
+    match exn with
+    | End_of_file -> ()
+    | _ as e      -> raise e
 
   let start ~hostname ~maildrop ~stop =
     let ctx = default_ctx in
     let mode = `TCP (`Port 110) in
-    Conduit_lwt_unix.serve ~stop ~ctx ~mode (callback hostname maildrop)
+    Conduit_lwt_unix.serve ~stop ~on_exn ~ctx ~mode (callback hostname maildrop)
 end

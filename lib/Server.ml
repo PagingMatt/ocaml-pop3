@@ -32,12 +32,15 @@ end = struct
         try
           iter_state input_channel output_channel state
         with
-        (* Client has disconnected. *)
+        (* Client has disconnected ungracefully. *)
         | Unix.Unix_error(Unix.ECONNRESET, _, _) -> Lwt.return ())
 
   let on_exn exn =
     match exn with
+    (* EOF indicates that the underlying channels are now unavailable after
+       connection closes. *)
     | End_of_file -> ()
+    (* Other unexpected exceptions should be re-thrown. *)
     | _ as e      -> raise e
 
   let start ~hostname ~maildrop ~stop =

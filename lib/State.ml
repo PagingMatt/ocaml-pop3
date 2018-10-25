@@ -42,10 +42,12 @@ module BackingStoreState (B : Banner) (S : Store) : State = struct
   let terminated (_,s,_,_) = (s = Disconnected)
 
   let auth_fail hostname store banner_time =
-    ((hostname, Authorization None, banner_time, store), Reply.err None)
+    ((hostname, Authorization None, banner_time, store),
+      Reply.err (Some ("incorrect secret")))
 
   let auth_quit hostname store banner_time =
-    ((hostname, Disconnected, banner_time, store), Reply.ok None [])
+    ((hostname, Disconnected, banner_time, store),
+      Reply.ok (Some (Printf.sprintf "%s signing off" hostname)) [])
 
   let auth_result hostname store banner_time mailbox success =
     if success then

@@ -43,7 +43,7 @@ module BackingStoreState (B : Banner) (S : Store) : State = struct
 
   let auth_fail hostname store banner_time =
     ((hostname, Authorization None, banner_time, store),
-      Reply.err (Some ("incorrect secret")))
+      Reply.err None)
 
   let auth_quit hostname store banner_time =
     ((hostname, Disconnected, banner_time, store),

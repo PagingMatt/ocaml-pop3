@@ -43,16 +43,20 @@ module BackingStoreState (B : Banner) (S : Store) : State = struct
 
   let auth_fail hostname store banner_time =
     ((hostname, Authorization None, banner_time, store),
-      Reply.err None)
+      Reply.err (Some "permission denied"))
+
+  let auth_invalid_cmd hostname store banner_time =
+    ((hostname, Authorization None, banner_time, store),
+      Reply.err (Some "command invalid before authorized"))
 
   let auth_quit hostname store banner_time =
     ((hostname, Disconnected, banner_time, store),
-      Reply.ok (Some (Printf.sprintf "%s signing off" hostname)) [])
+      Reply.ok (Some (Printf.sprintf "%s POP3 server signing off" hostname)) [])
 
   let auth_result hostname store banner_time mailbox success =
     if success then
       ((hostname, Transaction mailbox, banner_time, store),
-        Reply.ok (Some mailbox) [])
+        Reply.ok (Some "maildrop locked and ready") [])
     else auth_fail hostname store banner_time
 
   let auth_apop hostname store banner_time mailbox digest =
@@ -81,22 +85,38 @@ module BackingStoreState (B : Banner) (S : Store) : State = struct
   let f_auth_none hostname store banner_time cmd =
     match cmd with
     | Apop (mailbox, digest) ->
+      (* Attempt to verify the digest. *)
       auth_apop hostname store banner_time mailbox digest
     | Quit ->
+      (* Terminate the session. *)
       Lwt.return (auth_quit hostname store banner_time)
     | User mailbox ->
+      (* Memoize mailbox and return +OK ready for PASScommand. *)
       auth_user hostname store banner_time mailbox
-    | _ ->
+    | Pass _secret ->
+      (* PASS invalid before a USER command. *)
       Lwt.return (auth_fail hostname store banner_time)
+    | _ ->
+      (* Other commands are invalid in auth state. *)
+      Lwt.return (auth_invalid_cmd hostname store banner_time)
 
   let f_auth_some hostname store banner_time mailbox cmd =
     match cmd with
+    | Apop (_mailbox', _digest) ->
+      (* Attempt to verify digest, if this fails reset memoized mailbox. *)
+      f_auth_none hostname store banner_time cmd
     | Pass secret ->
+      (* Attempt to verify secret for memoized mailbox. *)
       auth_pass hostname store banner_time mailbox secret
     | Quit ->
-      Lwt.return (auth_quit hostname store banner_time)
+      (* Terminate the session. *)
+      f_auth_none hostname store banner_time cmd
+    | User _mailbox' ->
+      (* Change memoized mailbox and return +OK ready for PASS command. *)
+      f_auth_none hostname store banner_time cmd
     | _ ->
-      Lwt.return (auth_fail hostname store banner_time)
+      (* Other commands are invalid in auth state. *)
+      Lwt.return (auth_invalid_cmd hostname store banner_time)
 
   let trans_fail hostname store banner_time mailbox =
     ((hostname, Transaction mailbox, banner_time, store), Reply.err None)

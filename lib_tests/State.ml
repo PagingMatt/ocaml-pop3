@@ -75,6 +75,7 @@ module Helpers = struct
   let cmd_list' = List (Some 0)
   let cmd_noop  = Noop
   let cmd_pass  = Pass secret
+  let cmd_pass' = Pass secret'
   let cmd_quit  = Quit
   let cmd_retr  = Retr 0
   let cmd_rset  = Rset
@@ -404,6 +405,19 @@ module Transaction = struct
           "Hello, world." l2
       | _ -> Alcotest.fail "Unexpected reply lines pattern."
 
+  let f_transaction_retr_err_reply switch () =
+    Lwt_switch.add_hook (Some switch) (fun () -> Lwt.return ());
+    TestStateB.start hostname maildrop
+    >>= fun s0     -> TestStateB.f s0 cmd_user'
+    >>= fun (s1,_) -> TestStateB.f s1 cmd_pass'
+    >>= fun (s2,_) -> TestStateB.f s2 cmd_retr
+    >|= fun (_ ,r) ->
+      match Pop3.Reply.lines_of_t r with
+      | l::[] ->
+        Alcotest.(check string) "Checking reply (line 1)."
+          "-ERR" l
+      | _ -> Alcotest.fail "Unexpected reply lines pattern."
+
   let f_transaction_rset_err_not_implemented_reply switch () =
     Lwt_switch.add_hook (Some switch) (fun () -> Lwt.return ());
     TestStateA.start hostname maildrop
@@ -483,20 +497,21 @@ module Transaction = struct
       | _ -> Alcotest.fail "Unexpected reply lines pattern."
 
   let unit_tests = [
-    Alcotest_lwt.test_case "Check reply from invalid APOP command in 'Transaction mailbox'."      `Quick (f_transaction_other_cmd_err_reply cmd_apop);
-    Alcotest_lwt.test_case "Check reply from valid DELE command in 'Transaction mailbox'."        `Quick (f_transaction_dele_err_not_implemented_reply);
-    Alcotest_lwt.test_case "Check reply from valid LIST (None) command in 'Transaction mailbox'." `Quick (f_transaction_list_none_err_not_implemented_reply);
-    Alcotest_lwt.test_case "Check reply from valid LIST (Some) command in 'Transaction mailbox'." `Quick (f_transaction_list_some_err_not_implemented_reply);
-    Alcotest_lwt.test_case "Check reply from valid NOOP command in 'Transaction mailbox'."        `Quick (f_transaction_noop_ok_reply);
-    Alcotest_lwt.test_case "Check reply from invalid PASS command in 'Transaction mailbox'."      `Quick (f_transaction_other_cmd_err_reply cmd_pass);
-    Alcotest_lwt.test_case "Check reply from valid QUIT command in 'Transaction mailbox'."        `Quick (f_transaction_quit_ok_reply);
-    Alcotest_lwt.test_case "Check reply from valid RETR command in 'Transaction mailbox'."        `Quick (f_transaction_retr_ok_reply);
-    Alcotest_lwt.test_case "Check reply from valid RSET command in 'Transaction mailbox'."        `Quick (f_transaction_rset_err_not_implemented_reply);
-    Alcotest_lwt.test_case "Check reply from valid STAT command in 'Transaction mailbox'."        `Quick (f_transaction_stat_err_not_implemented_reply);
-    Alcotest_lwt.test_case "Check reply from valid TOP command in 'Transaction mailbox'."         `Quick (f_transaction_top_err_not_implemented_reply);
-    Alcotest_lwt.test_case "Check reply from valid UIDL (None) command in 'Transaction mailbox'." `Quick (f_transaction_uidl_none_err_not_implemented_reply);
-    Alcotest_lwt.test_case "Check reply from valid UIDL (Some) command in 'Transaction mailbox'." `Quick (f_transaction_uidl_some_err_not_implemented_reply);
-    Alcotest_lwt.test_case "Check reply from invalid USER command in 'Transaction mailbox'."      `Quick (f_transaction_other_cmd_err_reply cmd_user);
+    Alcotest_lwt.test_case "Check reply from invalid APOP command in 'Transaction mailbox'."                          `Quick (f_transaction_other_cmd_err_reply cmd_apop);
+    Alcotest_lwt.test_case "Check reply from valid DELE command in 'Transaction mailbox'."                            `Quick (f_transaction_dele_err_not_implemented_reply);
+    Alcotest_lwt.test_case "Check reply from valid LIST (None) command in 'Transaction mailbox'."                     `Quick (f_transaction_list_none_err_not_implemented_reply);
+    Alcotest_lwt.test_case "Check reply from valid LIST (Some) command in 'Transaction mailbox'."                     `Quick (f_transaction_list_some_err_not_implemented_reply);
+    Alcotest_lwt.test_case "Check reply from valid NOOP command in 'Transaction mailbox'."                            `Quick (f_transaction_noop_ok_reply);
+    Alcotest_lwt.test_case "Check reply from invalid PASS command in 'Transaction mailbox'."                          `Quick (f_transaction_other_cmd_err_reply cmd_pass);
+    Alcotest_lwt.test_case "Check reply from valid QUIT command in 'Transaction mailbox'."                            `Quick (f_transaction_quit_ok_reply);
+    Alcotest_lwt.test_case "Check reply from valid RETR command in 'Transaction mailbox'."                            `Quick (f_transaction_retr_ok_reply);
+    Alcotest_lwt.test_case "Check reply from invalid RETR command in 'Transaction mailbox' (message does not exist)." `Quick (f_transaction_retr_err_reply);
+    Alcotest_lwt.test_case "Check reply from valid RSET command in 'Transaction mailbox'."                            `Quick (f_transaction_rset_err_not_implemented_reply);
+    Alcotest_lwt.test_case "Check reply from valid STAT command in 'Transaction mailbox'."                            `Quick (f_transaction_stat_err_not_implemented_reply);
+    Alcotest_lwt.test_case "Check reply from valid TOP command in 'Transaction mailbox'."                             `Quick (f_transaction_top_err_not_implemented_reply);
+    Alcotest_lwt.test_case "Check reply from valid UIDL (None) command in 'Transaction mailbox'."                     `Quick (f_transaction_uidl_none_err_not_implemented_reply);
+    Alcotest_lwt.test_case "Check reply from valid UIDL (Some) command in 'Transaction mailbox'."                     `Quick (f_transaction_uidl_some_err_not_implemented_reply);
+    Alcotest_lwt.test_case "Check reply from invalid USER command in 'Transaction mailbox'."                          `Quick (f_transaction_other_cmd_err_reply cmd_user);
   ]
 end
 

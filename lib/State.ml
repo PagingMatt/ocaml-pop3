@@ -139,8 +139,8 @@ module BackingStoreState (B : Banner) (S : Store) : State = struct
 
   let f (hostname, state, banner_time, store) cmd =
     match state with
-    | Authorization mailbox ->
-      f_auth hostname store banner_time mailbox cmd
+    | Authorization mailbox_opt ->
+      f_auth hostname store banner_time mailbox_opt cmd
     | Disconnected ->
       Lwt.return ((hostname, Disconnected, banner_time, store), Reply.Common.internal_error)
     | Transaction mailbox ->

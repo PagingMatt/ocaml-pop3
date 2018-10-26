@@ -124,6 +124,19 @@ module BackingStoreState (B : Banner) (S : Store) : State = struct
     | Retr msg -> trans_retr hostname store banner_time mailbox msg
     | _ -> Lwt.return (trans_fail hostname store banner_time mailbox)
 
+  let update_quit hostname store banner_time _mailbox =
+    Lwt.return ((hostname, Disconnected, banner_time, store),
+      Reply.ok (Some (Printf.sprintf "%s POP3 server signing off" hostname)) [])
+
+  let update_invalid_cmd hostname store banner_time mailbox =
+    ((hostname, Update mailbox, banner_time, store),
+      Reply.err (Some "command invalid after quiting transactions"))
+
+  let f_update hostname store banner_time mailbox cmd =
+    match cmd with
+    | Quit -> update_quit hostname store banner_time mailbox
+    | _    -> Lwt.return (update_invalid_cmd hostname store banner_time mailbox)
+
   let f (hostname, state, banner_time, store) cmd =
     match state with
     | Authorization mailbox ->
@@ -132,6 +145,6 @@ module BackingStoreState (B : Banner) (S : Store) : State = struct
       Lwt.return ((hostname, Disconnected, banner_time, store), Reply.Common.internal_error)
     | Transaction mailbox ->
       f_trans hostname store banner_time mailbox cmd
-    | Update _ ->
-      Lwt.return ((hostname, Disconnected, banner_time, store), Reply.Common.internal_error)
+    | Update mailbox ->
+      f_update hostname store banner_time mailbox cmd
 end

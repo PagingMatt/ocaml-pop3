@@ -31,6 +31,7 @@ module BackingStoreState (B : Banner) (S : Store) : State = struct
     | Transaction   of string
     | Update        of string
 
+  (* Abstracted state type is (hostname, session_state, banner_time, store). *)
   type t = string * pop3_session_state * Unix.tm * S.t
 
   let start h p =
@@ -55,30 +56,40 @@ module BackingStoreState (B : Banner) (S : Store) : State = struct
 
   let auth_result hostname store banner_time mailbox success =
     if success then
+      (* Authorization was successful so move into Transaction state. *)
       ((hostname, Transaction mailbox, banner_time, store),
         Reply.ok (Some "maildrop locked and ready") [])
-    else auth_fail hostname store banner_time
+    else
+      (* Authorization was unsuccessful so fail and reset memoized mailbox. *)
+      auth_fail hostname store banner_time
 
   let auth_apop hostname store banner_time mailbox digest =
     S.apop_of_mailbox store banner_time hostname mailbox
     >|= fun digest_option ->
       match digest_option with
       | None ->
+        (* Mailbox does not exist so fail. *)
         auth_fail hostname store banner_time
       | Some digest' ->
+        (* Compare actual computed digest against provided digest for mailbox. *)
         auth_result hostname store banner_time mailbox (digest = digest')
 
   let auth_pass hostname store banner_time mailbox_opt secret =
     match mailbox_opt with
-    | None -> Lwt.return (auth_fail hostname store banner_time)
+    | None ->
+      (* No mailbox memoized so nothing to authorize against. *)
+      Lwt.return (auth_fail hostname store banner_time)
     | Some mailbox ->
-    S.secret_of_mailbox store mailbox
-    >|= fun secret_option ->
-      match secret_option with
-      | None ->
-        auth_fail hostname store banner_time
-      | Some secret' ->
-        auth_result hostname store banner_time mailbox (secret = secret')
+      (* Verify provided secret against secret for memoized mailbox. *)
+      S.secret_of_mailbox store mailbox
+      >|= fun secret_option ->
+        match secret_option with
+        | None ->
+          (* Memoized mailbox does not exist so fail. *)
+          auth_fail hostname store banner_time
+        | Some secret' ->
+          (* Compare actual secret against provided secret for memoized mailbox. *)
+          auth_result hostname store banner_time mailbox (secret = secret')
 
   let auth_user hostname store banner_time mailbox =
     Lwt.return
@@ -120,9 +131,15 @@ module BackingStoreState (B : Banner) (S : Store) : State = struct
 
   let f_trans hostname store banner_time mailbox cmd =
     match cmd with
-    | Quit -> Lwt.return (trans_quit hostname store banner_time mailbox)
-    | Retr msg -> trans_retr hostname store banner_time mailbox msg
-    | _ -> Lwt.return (trans_fail hostname store banner_time mailbox)
+    | Quit ->
+      (* Stop accepting transactions and move to the Update state. *)
+      Lwt.return (trans_quit hostname store banner_time mailbox)
+    | Retr msg ->
+      (* Read message with 'message number' [msg]. *)
+      trans_retr hostname store banner_time mailbox msg
+    | _ ->
+      (* Other commands are invalid in Transaction state. *)
+      Lwt.return (trans_fail hostname store banner_time mailbox)
 
   let update_quit hostname store banner_time _mailbox =
     Lwt.return ((hostname, Disconnected, banner_time, store),
@@ -134,17 +151,25 @@ module BackingStoreState (B : Banner) (S : Store) : State = struct
 
   let f_update hostname store banner_time mailbox cmd =
     match cmd with
-    | Quit -> update_quit hostname store banner_time mailbox
-    | _    -> Lwt.return (update_invalid_cmd hostname store banner_time mailbox)
+    | Quit ->
+      (* Terminate the session. *)
+      update_quit hostname store banner_time mailbox
+    | _    ->
+      (* Other commands are invalid in Update state. *)
+      Lwt.return (update_invalid_cmd hostname store banner_time mailbox)
 
   let f (hostname, state, banner_time, store) cmd =
     match state with
     | Authorization mailbox_opt ->
+      (* Drop into the handler for commands when in the Authorization state. *)
       f_auth hostname store banner_time mailbox_opt cmd
     | Disconnected ->
+      (* The 'Disconnected' state cannot accept commands. *)
       Lwt.return ((hostname, Disconnected, banner_time, store), Reply.Common.internal_error)
     | Transaction mailbox ->
+      (* Drop into the handler for commands when in the Transaction state. *)
       f_trans hostname store banner_time mailbox cmd
     | Update mailbox ->
+      (* Drop into the handler for commands when in the Update state. *)
       f_update hostname store banner_time mailbox cmd
 end

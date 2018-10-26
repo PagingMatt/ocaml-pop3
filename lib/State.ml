@@ -117,6 +117,16 @@ module BackingStoreState (B : Banner) (S : Store) : State = struct
   let trans_fail hostname store banner_time mailbox =
     ((hostname, Transaction mailbox, banner_time, store), Reply.err None)
 
+  let trans_not_implemented hostname store banner_time mailbox =
+    Lwt.return
+      ((hostname, Transaction mailbox, banner_time, store),
+        Reply.err (Some "not implemented"))
+
+  let trans_noop hostname store banner_time mailbox =
+    Lwt.return
+      ((hostname, Transaction mailbox, banner_time, store),
+        Reply.ok None [])
+
   let trans_quit hostname store banner_time mailbox =
     ((hostname, Update mailbox, banner_time, store), Reply.ok None [])
 
@@ -129,17 +139,48 @@ module BackingStoreState (B : Banner) (S : Store) : State = struct
         ((hostname, Transaction mailbox, banner_time, store),
           Reply.ok (Some "-1 octets") ls)
 
+  let trans_invalid_command hostname store banner_time mailbox =
+    ((hostname, Update mailbox, banner_time, store),
+      Reply.err (Some "command invalid while issuing transactions"))
+
   let f_trans hostname store banner_time mailbox cmd =
     match cmd with
+    | Dele _msg ->
+      (* Mark message with 'message number' [msg] for deletion. *)
+      trans_not_implemented hostname store banner_time mailbox
+    | List None ->
+      (* Scan list entire mailbox. *)
+      trans_not_implemented hostname store banner_time mailbox
+    | List (Some _msg) ->
+      (* Scan list message with 'message number' [msg]. *)
+      trans_not_implemented hostname store banner_time mailbox
+    | Noop ->
+      (* Ping back '+OK' but take no other action. *)
+      trans_noop hostname store banner_time mailbox
     | Quit ->
       (* Stop accepting transactions and move to the Update state. *)
       Lwt.return (trans_quit hostname store banner_time mailbox)
     | Retr msg ->
       (* Read message with 'message number' [msg]. *)
       trans_retr hostname store banner_time mailbox msg
+    | Rset ->
+      (* Resets messages that are marked for deletion. *)
+      trans_not_implemented hostname store banner_time mailbox
+    | Stat ->
+      (* Drop list entire mailbox. *)
+      trans_not_implemented hostname store banner_time mailbox
+    | Top (_msg, _ls) ->
+      (* Reads top [ls] lines from message with 'message number' [msg]. *)
+      trans_not_implemented hostname store banner_time mailbox
+    | Uidl None ->
+      (* Provides unique identifiers for all messages in mailbox. *)
+      trans_not_implemented hostname store banner_time mailbox
+    | Uidl (Some _msg) ->
+      (* Provides unique identifier for message with 'message number' [msg]. *)
+      trans_not_implemented hostname store banner_time mailbox
     | _ ->
       (* Other commands are invalid in Transaction state. *)
-      Lwt.return (trans_fail hostname store banner_time mailbox)
+      Lwt.return (trans_invalid_command hostname store banner_time mailbox)
 
   let update_quit hostname store banner_time _mailbox =
     Lwt.return ((hostname, Disconnected, banner_time, store),

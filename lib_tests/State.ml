@@ -10,6 +10,7 @@ module Helpers = struct
   let mailbox  = "123"
   let mailbox' = "456"
   let maildrop = "/tmp/pop3"
+  let msg      = ["Hello, world."]
   let secret   = "abc"
   let secret'  = "def"
 
@@ -29,7 +30,7 @@ module Helpers = struct
       Lwt.return (Some digest)
 
     let read _s _m _i =
-      Lwt.return None
+      Lwt.return (Some msg)
   end
 
   module NoopStoreB : Store = struct
@@ -320,6 +321,169 @@ module Authorization = struct
   end
 end
 
+module Transaction = struct
+  open Helpers
+
+  let f_transaction_dele_err_not_implemented_reply switch () =
+    Lwt_switch.add_hook (Some switch) (fun () -> Lwt.return ());
+    TestStateA.start hostname maildrop
+    >>= fun s0     -> TestStateA.f s0 cmd_user
+    >>= fun (s1,_) -> TestStateA.f s1 cmd_pass
+    >>= fun (s2,_) -> TestStateA.f s2 cmd_dele
+    >|= fun (_ ,r) ->
+      match Pop3.Reply.lines_of_t r with
+      | l::[] ->
+        Alcotest.(check string) "Checking reply."
+          "-ERR not implemented" l
+      | _ -> Alcotest.fail "Unexpected reply lines pattern."
+
+  let f_transaction_list_none_err_not_implemented_reply switch () =
+    Lwt_switch.add_hook (Some switch) (fun () -> Lwt.return ());
+    TestStateA.start hostname maildrop
+    >>= fun s0     -> TestStateA.f s0 cmd_user
+    >>= fun (s1,_) -> TestStateA.f s1 cmd_pass
+    >>= fun (s2,_) -> TestStateA.f s2 cmd_list
+    >|= fun (_ ,r) ->
+      match Pop3.Reply.lines_of_t r with
+      | l::[] ->
+        Alcotest.(check string) "Checking reply."
+          "-ERR not implemented" l
+      | _ -> Alcotest.fail "Unexpected reply lines pattern."
+
+  let f_transaction_list_some_err_not_implemented_reply switch () =
+    Lwt_switch.add_hook (Some switch) (fun () -> Lwt.return ());
+    TestStateA.start hostname maildrop
+    >>= fun s0     -> TestStateA.f s0 cmd_user
+    >>= fun (s1,_) -> TestStateA.f s1 cmd_pass
+    >>= fun (s2,_) -> TestStateA.f s2 cmd_list'
+    >|= fun (_ ,r) ->
+      match Pop3.Reply.lines_of_t r with
+      | l::[] ->
+        Alcotest.(check string) "Checking reply."
+          "-ERR not implemented" l
+      | _ -> Alcotest.fail "Unexpected reply lines pattern."
+
+  let f_transaction_noop_ok_reply switch () =
+    Lwt_switch.add_hook (Some switch) (fun () -> Lwt.return ());
+    TestStateA.start hostname maildrop
+    >>= fun s0     -> TestStateA.f s0 cmd_user
+    >>= fun (s1,_) -> TestStateA.f s1 cmd_pass
+    >>= fun (s2,_) -> TestStateA.f s2 cmd_noop
+    >|= fun (_ ,r) ->
+      match Pop3.Reply.lines_of_t r with
+      | l::[] ->
+        Alcotest.(check string) "Checking reply."
+          "+OK" l
+      | _ -> Alcotest.fail "Unexpected reply lines pattern."
+
+  let f_transaction_quit_ok_reply switch () =
+    Lwt_switch.add_hook (Some switch) (fun () -> Lwt.return ());
+    TestStateA.start hostname maildrop
+    >>= fun s0     -> TestStateA.f s0 cmd_user
+    >>= fun (s1,_) -> TestStateA.f s1 cmd_pass
+    >>= fun (s2,_) -> TestStateA.f s2 cmd_quit
+    >|= fun (_ ,r) ->
+      match Pop3.Reply.lines_of_t r with
+      | l::[] ->
+        Alcotest.(check string) "Checking reply."
+          "+OK" l
+      | _ -> Alcotest.fail "Unexpected reply lines pattern."
+
+  let f_transaction_retr_ok_reply switch () =
+    Lwt_switch.add_hook (Some switch) (fun () -> Lwt.return ());
+    TestStateA.start hostname maildrop
+    >>= fun s0     -> TestStateA.f s0 cmd_user
+    >>= fun (s1,_) -> TestStateA.f s1 cmd_pass
+    >>= fun (s2,_) -> TestStateA.f s2 cmd_retr
+    >|= fun (_ ,r) ->
+      match Pop3.Reply.lines_of_t r with
+      | l1::l2::[] ->
+        Alcotest.(check string) "Checking reply (line 1)."
+          "+OK -1 octets" l1;
+        Alcotest.(check string) "Checking reply (line 2)."
+          "Hello, world." l2
+      | _ -> Alcotest.fail "Unexpected reply lines pattern."
+
+  let f_transaction_rset_err_not_implemented_reply switch () =
+    Lwt_switch.add_hook (Some switch) (fun () -> Lwt.return ());
+    TestStateA.start hostname maildrop
+    >>= fun s0     -> TestStateA.f s0 cmd_user
+    >>= fun (s1,_) -> TestStateA.f s1 cmd_pass
+    >>= fun (s2,_) -> TestStateA.f s2 cmd_rset
+    >|= fun (_ ,r) ->
+      match Pop3.Reply.lines_of_t r with
+      | l::[] ->
+        Alcotest.(check string) "Checking reply."
+          "-ERR not implemented" l
+      | _ -> Alcotest.fail "Unexpected reply lines pattern."
+
+  let f_transaction_stat_err_not_implemented_reply switch () =
+    Lwt_switch.add_hook (Some switch) (fun () -> Lwt.return ());
+    TestStateA.start hostname maildrop
+    >>= fun s0     -> TestStateA.f s0 cmd_user
+    >>= fun (s1,_) -> TestStateA.f s1 cmd_pass
+    >>= fun (s2,_) -> TestStateA.f s2 cmd_stat
+    >|= fun (_ ,r) ->
+      match Pop3.Reply.lines_of_t r with
+      | l::[] ->
+        Alcotest.(check string) "Checking reply."
+          "-ERR not implemented" l
+      | _ -> Alcotest.fail "Unexpected reply lines pattern."
+
+  let f_transaction_top_err_not_implemented_reply switch () =
+    Lwt_switch.add_hook (Some switch) (fun () -> Lwt.return ());
+    TestStateA.start hostname maildrop
+    >>= fun s0     -> TestStateA.f s0 cmd_user
+    >>= fun (s1,_) -> TestStateA.f s1 cmd_pass
+    >>= fun (s2,_) -> TestStateA.f s2 cmd_top
+    >|= fun (_ ,r) ->
+      match Pop3.Reply.lines_of_t r with
+      | l::[] ->
+        Alcotest.(check string) "Checking reply."
+          "-ERR not implemented" l
+      | _ -> Alcotest.fail "Unexpected reply lines pattern."
+
+  let f_transaction_uidl_none_err_not_implemented_reply switch () =
+    Lwt_switch.add_hook (Some switch) (fun () -> Lwt.return ());
+    TestStateA.start hostname maildrop
+    >>= fun s0     -> TestStateA.f s0 cmd_user
+    >>= fun (s1,_) -> TestStateA.f s1 cmd_pass
+    >>= fun (s2,_) -> TestStateA.f s2 cmd_uidl
+    >|= fun (_ ,r) ->
+      match Pop3.Reply.lines_of_t r with
+      | l::[] ->
+        Alcotest.(check string) "Checking reply."
+          "-ERR not implemented" l
+      | _ -> Alcotest.fail "Unexpected reply lines pattern."
+
+  let f_transaction_uidl_some_err_not_implemented_reply switch () =
+    Lwt_switch.add_hook (Some switch) (fun () -> Lwt.return ());
+    TestStateA.start hostname maildrop
+    >>= fun s0     -> TestStateA.f s0 cmd_user
+    >>= fun (s1,_) -> TestStateA.f s1 cmd_pass
+    >>= fun (s2,_) -> TestStateA.f s2 cmd_uidl'
+    >|= fun (_ ,r) ->
+      match Pop3.Reply.lines_of_t r with
+      | l::[] ->
+        Alcotest.(check string) "Checking reply."
+          "-ERR not implemented" l
+      | _ -> Alcotest.fail "Unexpected reply lines pattern."
+
+  let unit_tests = [
+    Alcotest_lwt.test_case "Check reply from valid DELE command in 'Transaction mailbox'."        `Quick (f_transaction_dele_err_not_implemented_reply);
+    Alcotest_lwt.test_case "Check reply from valid LIST (None) command in 'Transaction mailbox'." `Quick (f_transaction_list_none_err_not_implemented_reply);
+    Alcotest_lwt.test_case "Check reply from valid LIST (Some) command in 'Transaction mailbox'." `Quick (f_transaction_list_some_err_not_implemented_reply);
+    Alcotest_lwt.test_case "Check reply from valid NOOP command in 'Transaction mailbox'."        `Quick (f_transaction_noop_ok_reply);
+    Alcotest_lwt.test_case "Check reply from valid QUIT command in 'Transaction mailbox'."        `Quick (f_transaction_quit_ok_reply);
+    Alcotest_lwt.test_case "Check reply from valid RETR command in 'Transaction mailbox'."        `Quick (f_transaction_retr_ok_reply);
+    Alcotest_lwt.test_case "Check reply from valid RSET command in 'Transaction mailbox'."        `Quick (f_transaction_rset_err_not_implemented_reply);
+    Alcotest_lwt.test_case "Check reply from valid STAT command in 'Transaction mailbox'."        `Quick (f_transaction_stat_err_not_implemented_reply);
+    Alcotest_lwt.test_case "Check reply from valid TOP command in 'Transaction mailbox'."         `Quick (f_transaction_top_err_not_implemented_reply);
+    Alcotest_lwt.test_case "Check reply from valid UIDL (None) command in 'Transaction mailbox'." `Quick (f_transaction_uidl_none_err_not_implemented_reply);
+    Alcotest_lwt.test_case "Check reply from valid UIDL (Some) command in 'Transaction mailbox'." `Quick (f_transaction_uidl_some_err_not_implemented_reply);
+  ]
+end
+
 module Update = struct
   open Helpers
 
@@ -372,4 +536,5 @@ end
 let unit_tests =
   Authorization.None.unit_tests @
   Authorization.Some.unit_tests @
+  Transaction.unit_tests @
   Update.unit_tests

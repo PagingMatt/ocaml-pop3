@@ -18,7 +18,7 @@ module IrminStore : Store = struct
   type t = IrminGitFsKvStore.t
 
   let init p =
-    Irmin_git.config ~bare:true p
+    Irmin_git.config ~bare:false p
     |> IrminGitFsKvStore.Repo.v
     >>= IrminGitFsKvStore.master
 

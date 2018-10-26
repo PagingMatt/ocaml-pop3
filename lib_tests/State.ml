@@ -320,6 +320,56 @@ module Authorization = struct
   end
 end
 
+module Update = struct
+  open Helpers
+
+  let f_update_quit_ok_reply switch () =
+    Lwt_switch.add_hook (Some switch) (fun () -> Lwt.return ());
+    TestStateA.start hostname maildrop
+    >>= fun s0     -> TestStateA.f s0 cmd_user
+    >>= fun (s1,_) -> TestStateA.f s1 cmd_pass
+    >>= fun (s2,_) -> TestStateA.f s2 cmd_quit
+    >>= fun (s3,_) -> TestStateA.f s3 cmd_quit
+    >|= fun (_ ,r) ->
+      match Pop3.Reply.lines_of_t r with
+      | l::[] ->
+        Alcotest.(check string) "Checking reply."
+          "+OK localhost POP3 server signing off" l
+      | _ -> Alcotest.fail "Unexpected reply lines pattern."
+
+  let f_update_other_cmd_err_reply cmd switch () =
+    Lwt_switch.add_hook (Some switch) (fun () -> Lwt.return ());
+    TestStateA.start hostname maildrop
+    >>= fun s0     -> TestStateA.f s0 cmd_user
+    >>= fun (s1,_) -> TestStateA.f s1 cmd_pass
+    >>= fun (s2,_) -> TestStateA.f s2 cmd_quit
+    >>= fun (s3,_) -> TestStateA.f s3 cmd
+    >|= fun (_ ,r) ->
+    match Pop3.Reply.lines_of_t r with
+      | l::[] ->
+        Alcotest.(check string) "Checking reply."
+          "-ERR command invalid after quiting transactions" l
+      | _ -> Alcotest.fail "Unexpected reply lines pattern."
+
+  let unit_tests = [
+    Alcotest_lwt.test_case "Check reply from invalid APOP command in 'Update mailbox'."        `Quick (f_update_other_cmd_err_reply cmd_apop);
+    Alcotest_lwt.test_case "Check reply from invalid DELE command in 'Update mailbox'."        `Quick (f_update_other_cmd_err_reply cmd_dele);
+    Alcotest_lwt.test_case "Check reply from invalid LIST (None) command in 'Update mailbox'." `Quick (f_update_other_cmd_err_reply cmd_list);
+    Alcotest_lwt.test_case "Check reply from invalid LIST (Some) command in 'Update mailbox'." `Quick (f_update_other_cmd_err_reply cmd_list');
+    Alcotest_lwt.test_case "Check reply from invalid NOOP command in 'Update mailbox'."        `Quick (f_update_other_cmd_err_reply cmd_noop);
+    Alcotest_lwt.test_case "Check reply from valid QUIT command in 'Update mailbox'."          `Quick (f_update_quit_ok_reply);
+    Alcotest_lwt.test_case "Check reply from invalid PASS command in 'Update mailbox'."        `Quick (f_update_other_cmd_err_reply cmd_pass);
+    Alcotest_lwt.test_case "Check reply from invalid RETR command in 'Update mailbox'."        `Quick (f_update_other_cmd_err_reply cmd_retr);
+    Alcotest_lwt.test_case "Check reply from invalid RSET command in 'Update mailbox'."        `Quick (f_update_other_cmd_err_reply cmd_rset);
+    Alcotest_lwt.test_case "Check reply from invalid STAT command in 'Update mailbox'."        `Quick (f_update_other_cmd_err_reply cmd_stat);
+    Alcotest_lwt.test_case "Check reply from invalid TOP command in 'Update mailbox'."         `Quick (f_update_other_cmd_err_reply cmd_top);
+    Alcotest_lwt.test_case "Check reply from invalid UIDL (None) command in 'Update mailbox'." `Quick (f_update_other_cmd_err_reply cmd_uidl);
+    Alcotest_lwt.test_case "Check reply from invalid UIDL (Some) command in 'Update mailbox'." `Quick (f_update_other_cmd_err_reply cmd_uidl');
+    Alcotest_lwt.test_case "Check reply from invalid USER command in 'Update mailbox'."        `Quick (f_update_other_cmd_err_reply cmd_user);
+  ]
+end
+
 let unit_tests =
   Authorization.None.unit_tests @
-  Authorization.Some.unit_tests
+  Authorization.Some.unit_tests @
+  Update.unit_tests

@@ -108,7 +108,7 @@ let parse cmd args =
   None
 
 let t_of_string_opt cmd =
-  let cmd_args = String.uppercase_ascii cmd |> String.split_on_char ' ' in
+  let cmd_args = String.split_on_char ' ' cmd in
   match cmd_args with
-  | c::args -> parse c args
+  | c::args -> parse (String.uppercase_ascii c) args
   | _       -> None

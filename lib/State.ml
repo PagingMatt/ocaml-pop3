@@ -139,6 +139,10 @@ module BackingStoreState (B : Banner) (S : Store) : State = struct
         ((hostname, Transaction mailbox, banner_time, store),
           Reply.ok (Some "-1 octets") ls)
 
+  let trans_invalid_command hostname store banner_time mailbox =
+    ((hostname, Update mailbox, banner_time, store),
+      Reply.err (Some "command invalid while issuing transactions"))
+
   let f_trans hostname store banner_time mailbox cmd =
     match cmd with
     | Dele _msg ->
@@ -176,7 +180,7 @@ module BackingStoreState (B : Banner) (S : Store) : State = struct
       trans_not_implemented hostname store banner_time mailbox
     | _ ->
       (* Other commands are invalid in Transaction state. *)
-      Lwt.return (trans_fail hostname store banner_time mailbox)
+      Lwt.return (trans_invalid_command hostname store banner_time mailbox)
 
   let update_quit hostname store banner_time _mailbox =
     Lwt.return ((hostname, Disconnected, banner_time, store),

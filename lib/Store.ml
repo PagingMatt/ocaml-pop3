@@ -12,7 +12,7 @@ module type Store = sig
   val read : t -> string -> int -> string list option Lwt.t
 end
 
-module IrminStore : Store = struct
+module IrminStore (P : MessageParser) : Store = struct
   module IrminGitFsKvStore = Irmin_unix.Git.FS.KV(Irmin.Contents.String)
 
   type t = IrminGitFsKvStore.t

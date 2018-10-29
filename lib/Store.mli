@@ -36,4 +36,4 @@ end
 
 (** The [IrminStore] module is an implementation of the [Store] signature which
     uses Irmin for the underlying store. *)
-module IrminStore : Store
+module IrminStore (P : MessageParser) : Store

@@ -19,14 +19,13 @@ module JsonMessageParser : MessageParser = struct
   let lines_of_string msg =
     match (from_string msg) with
     | `List lines ->
-      (* Top-level JSON structure should be a list. *)
       (match fold_lines (Some []) lines with
       | Some ls -> Some (List.rev ls)
       | None    -> None)
-    | _ ->
-      (* Any other top-level JSON structure is a failure. *)
-      None
+    | _ -> None
 
-  let uid_of_string _msg =
-    None
+  let uid_of_string msg =
+    match (lines_of_string msg) with
+    | Some ls -> Some (String.concat "\r\n" ls |> Digest.string)
+    | None -> None
 end

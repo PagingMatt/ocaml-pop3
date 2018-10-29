@@ -131,7 +131,7 @@ module BackingStoreState (B : Banner) (S : Store) : State = struct
     ((hostname, Update mailbox, banner_time, store), Reply.ok None [])
 
   let trans_retr hostname store banner_time mailbox msg =
-    S.read store mailbox msg
+    S.lines_of_message store mailbox msg
     >|= fun ls_option ->
       match ls_option with
       | None -> trans_fail hostname store banner_time mailbox

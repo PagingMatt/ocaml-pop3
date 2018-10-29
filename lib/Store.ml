@@ -10,7 +10,7 @@ module type Store = sig
 
   val apop_of_mailbox : t -> Unix.tm -> string -> string -> string option Lwt.t
 
-  val read : t -> string -> int -> string list option Lwt.t
+  val lines_of_message : t -> string -> int -> string list option Lwt.t
 end
 
 module IrminStore (P : MessageParser) : Store = struct
@@ -37,7 +37,7 @@ module IrminStore (P : MessageParser) : Store = struct
         |> Digest.string
         |> fun digest -> Some digest
 
-  let read s m i =
+  let lines_of_message s m i =
     string_of_int i
     |> fun msg -> IrminGitFsKvStore.find s ["mailboxes"; m; msg]
     >|= fun contents ->

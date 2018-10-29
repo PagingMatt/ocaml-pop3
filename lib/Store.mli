@@ -33,7 +33,7 @@ module type Store = sig
 
       @return [None] or [Some message_lines] depdending on whether the message
               exists in the mailbox. This is wrapped in a lightweight thread.*)
-  val read : t -> string -> int -> string list option Lwt.t
+  val lines_of_message : t -> string -> int -> string list option Lwt.t
 end
 
 (** The [IrminStore] module is an implementation of the [Store] signature which

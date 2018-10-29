@@ -29,7 +29,7 @@ module Helpers = struct
     let apop_of_mailbox _s _t _h _m =
       Lwt.return (Some digest)
 
-    let read _s _m _i =
+    let lines_of_message _s _m _i =
       Lwt.return (Some msg)
   end
 
@@ -44,7 +44,7 @@ module Helpers = struct
     let apop_of_mailbox _s _t _h _m =
       Lwt.return (Some digest')
 
-    let read _s _m _i =
+    let lines_of_message _s _m _i =
       Lwt.return None
   end
 
@@ -59,7 +59,7 @@ module Helpers = struct
     let apop_of_mailbox _s _t _h _m =
       Lwt.return None
 
-    let read _s _m _i =
+    let lines_of_message _s _m _i =
       Lwt.return None
   end
 

@@ -18,7 +18,21 @@ let lines_of_string_some_lines () =
       "B" l2;
   | _ -> Alcotest.fail "Unexpected parsed lines pattern."
 
+let lines_of_string_int_list_none () =
+  let ls = lines_of_string "[1, 2]" in
+  match ls with
+  | None -> ignore ()
+  | _ -> Alcotest.fail "Unexpected parsed lines pattern."
+
+let lines_of_string_mixed_list_none () =
+  let ls = lines_of_string "[\"A\", 2]" in
+  match ls with
+  | None -> ignore ()
+  | _ -> Alcotest.fail "Unexpected parsed lines pattern."
+
 let unit_tests = [
   Alcotest.test_case "Checks value of single deserialized line." `Quick lines_of_string_some_line;
   Alcotest.test_case "Checks value of deserialized lines."       `Quick lines_of_string_some_lines;
+  Alcotest.test_case "Checks int list deserializes to None."     `Quick lines_of_string_int_list_none;
+  Alcotest.test_case "Checks mixed list deserializes to None."   `Quick lines_of_string_mixed_list_none;
 ]

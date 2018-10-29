@@ -43,5 +43,5 @@ module IrminStore (P : MessageParser) : Store = struct
     >|= fun contents ->
       match contents with
       | None -> None
-      | Some s -> Some (String.split_on_char '\n' s)
+      | Some s -> P.lines_of_string s
 end

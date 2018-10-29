@@ -1,5 +1,7 @@
 (** Store of mailbox secrets and maildrop content. *)
 
+open Message
+
 (** Module type for store of mailbox secrets and maildrop content. *)
 module type Store = sig
   (** Store. *)

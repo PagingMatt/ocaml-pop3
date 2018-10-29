@@ -1,4 +1,5 @@
 open Lwt.Infix
+open Message
 
 module type Store = sig
   type t

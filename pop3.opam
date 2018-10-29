@@ -24,4 +24,5 @@ depends: [
   "dune" {build}
   "irmin"
   "odoc" {build}
+  "yojson"
 ]

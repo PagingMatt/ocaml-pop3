@@ -34,6 +34,13 @@ module type Store = sig
       @return [None] or [Some message_lines] depdending on whether the message
               exists in the mailbox. This is wrapped in a lightweight thread.*)
   val lines_of_message : t -> string -> int -> string list option Lwt.t
+
+  (** Get the unique ID for a message from store [t] in mailbox corresponding
+      to the [string] parameter with id corresponding to the [int] parameter.
+
+      @return [None] or [Some uid] depending on whether the message
+              exists in the mailbox. This is wrapped in a lightweight thread.*)
+  val uid_of_message : t -> string -> int -> string option Lwt.t
 end
 
 (** The [IrminStore] module is an implementation of the [Store] signature which

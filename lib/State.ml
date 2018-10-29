@@ -131,13 +131,22 @@ module BackingStoreState (B : Banner) (S : Store) : State = struct
     ((hostname, Update mailbox, banner_time, store), Reply.ok None [])
 
   let trans_retr hostname store banner_time mailbox msg =
-    S.read store mailbox msg
+    S.lines_of_message store mailbox msg
     >|= fun ls_option ->
       match ls_option with
       | None -> trans_fail hostname store banner_time mailbox
       | Some ls ->
         ((hostname, Transaction mailbox, banner_time, store),
           Reply.ok (Some "-1 octets") ls)
+
+  let trans_uidl hostname store banner_time mailbox msg =
+    S.uid_of_message store mailbox msg
+    >|= fun uid_option ->
+      match uid_option with
+      | None -> trans_fail hostname store banner_time mailbox
+      | Some uid ->
+        ((hostname, Transaction mailbox, banner_time, store),
+          Reply.ok (Some (Printf.sprintf "%d %s" msg uid)) [])
 
   let trans_invalid_command hostname store banner_time mailbox =
     ((hostname, Update mailbox, banner_time, store),
@@ -175,9 +184,9 @@ module BackingStoreState (B : Banner) (S : Store) : State = struct
     | Uidl None ->
       (* Provides unique identifiers for all messages in mailbox. *)
       trans_not_implemented hostname store banner_time mailbox
-    | Uidl (Some _msg) ->
+    | Uidl (Some msg) ->
       (* Provides unique identifier for message with 'message number' [msg]. *)
-      trans_not_implemented hostname store banner_time mailbox
+      trans_uidl hostname store banner_time mailbox msg
     | _ ->
       (* Other commands are invalid in Transaction state. *)
       Lwt.return (trans_invalid_command hostname store banner_time mailbox)

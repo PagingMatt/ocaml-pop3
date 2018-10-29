@@ -14,7 +14,8 @@ module JsonMessageParser : MessageParser = struct
       match ls with
       | (`String line)::ls' ->
         fold_lines (Some (line::lines)) ls'
-      | _ -> None
+      | [] -> acc
+      | _  -> None
 
   let lines_of_string msg =
     match (from_string msg) with

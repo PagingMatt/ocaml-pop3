@@ -1,4 +1,5 @@
 open Lwt.Infix
+open Message
 
 module type Store = sig
   type t
@@ -12,7 +13,7 @@ module type Store = sig
   val read : t -> string -> int -> string list option Lwt.t
 end
 
-module IrminStore : Store = struct
+module IrminStore (P : MessageParser) : Store = struct
   module IrminGitFsKvStore = Irmin_unix.Git.FS.KV(Irmin.Contents.String)
 
   type t = IrminGitFsKvStore.t
@@ -42,5 +43,5 @@ module IrminStore : Store = struct
     >|= fun contents ->
       match contents with
       | None -> None
-      | Some s -> Some (String.split_on_char '\n' s)
+      | Some s -> P.lines_of_string s
 end

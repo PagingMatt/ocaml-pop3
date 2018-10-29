@@ -1,5 +1,7 @@
 (** Store of mailbox secrets and maildrop content. *)
 
+open Message
+
 (** Module type for store of mailbox secrets and maildrop content. *)
 module type Store = sig
   (** Store. *)
@@ -36,4 +38,4 @@ end
 
 (** The [IrminStore] module is an implementation of the [Store] signature which
     uses Irmin for the underlying store. *)
-module IrminStore : Store
+module IrminStore (P : MessageParser) : Store

@@ -31,6 +31,9 @@ module Helpers = struct
 
     let lines_of_message _s _m _i =
       Lwt.return (Some msg)
+
+    let uid_of_message _s _m _i =
+      Lwt.return None
   end
 
   module NoopStoreB : Store = struct
@@ -46,6 +49,9 @@ module Helpers = struct
 
     let lines_of_message _s _m _i =
       Lwt.return None
+
+    let uid_of_message _s _m _i =
+      Lwt.return None
   end
 
   module NoopStoreErr : Store = struct
@@ -60,6 +66,9 @@ module Helpers = struct
       Lwt.return None
 
     let lines_of_message _s _m _i =
+      Lwt.return None
+
+    let uid_of_message _s _m _i =
       Lwt.return None
   end
 

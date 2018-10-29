@@ -27,6 +27,9 @@ module JsonMessageParser : MessageParser = struct
 
   let uid_of_string msg =
     match (lines_of_string msg) with
-    | Some ls -> Some (String.concat "\r\n" ls |> Digest.string)
+    | Some ls -> Some
+      (String.concat "\r\n" ls
+      |> Digest.string
+      |> Digest.to_hex)
     | None -> None
 end

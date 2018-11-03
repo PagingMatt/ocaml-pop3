@@ -1,7 +1,6 @@
 (library
  (name pop3)
- (public_name pop3)
- (libraries ))
+ (public_name pop3))
 
 (documentation
  (package pop3))

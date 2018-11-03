@@ -19,11 +19,11 @@ module type State = sig
 
   val terminated : t -> bool
 
-  val f : t -> Command.t -> (t * Reply.t) Lwt.t
+  val f : t -> Pop3.Command.t -> (t * Pop3.Reply.t) Lwt.t
 end
 
 module BackingStoreState (B : Banner) (S : Store) : State = struct
-  open Command
+  open Pop3.Command
 
   type pop3_session_state =
     | Disconnected
@@ -44,21 +44,21 @@ module BackingStoreState (B : Banner) (S : Store) : State = struct
 
   let auth_fail hostname store banner_time =
     ((hostname, Authorization None, banner_time, store),
-      Reply.err (Some "permission denied"))
+      Pop3.Reply.err (Some "permission denied"))
 
   let auth_invalid_cmd hostname store banner_time =
     ((hostname, Authorization None, banner_time, store),
-      Reply.err (Some "command invalid before authorized"))
+      Pop3.Reply.err (Some "command invalid before authorized"))
 
   let auth_quit hostname store banner_time =
     ((hostname, Disconnected, banner_time, store),
-      Reply.ok (Some (Printf.sprintf "%s POP3 server signing off" hostname)) [])
+      Pop3.Reply.ok (Some (Printf.sprintf "%s POP3 server signing off" hostname)) [])
 
   let auth_result hostname store banner_time mailbox success =
     if success then
       (* Authorization was successful so move into Transaction state. *)
       ((hostname, Transaction mailbox, banner_time, store),
-        Reply.ok (Some "maildrop locked and ready") [])
+        Pop3.Reply.ok (Some "maildrop locked and ready") [])
     else
       (* Authorization was unsuccessful so fail and reset memoized mailbox. *)
       auth_fail hostname store banner_time
@@ -94,7 +94,7 @@ module BackingStoreState (B : Banner) (S : Store) : State = struct
   let auth_user hostname store banner_time mailbox =
     Lwt.return
       ((hostname, Authorization (Some mailbox), banner_time, store),
-        Reply.ok (Some mailbox) [])
+        Pop3.Reply.ok (Some mailbox) [])
 
   let f_auth hostname store banner_time mailbox cmd =
     match cmd with
@@ -115,20 +115,20 @@ module BackingStoreState (B : Banner) (S : Store) : State = struct
       Lwt.return (auth_invalid_cmd hostname store banner_time)
 
   let trans_fail hostname store banner_time mailbox =
-    ((hostname, Transaction mailbox, banner_time, store), Reply.err None)
+    ((hostname, Transaction mailbox, banner_time, store), Pop3.Reply.err None)
 
   let trans_not_implemented hostname store banner_time mailbox =
     Lwt.return
       ((hostname, Transaction mailbox, banner_time, store),
-        Reply.err (Some "not implemented"))
+        Pop3.Reply.err (Some "not implemented"))
 
   let trans_noop hostname store banner_time mailbox =
     Lwt.return
       ((hostname, Transaction mailbox, banner_time, store),
-        Reply.ok None [])
+        Pop3.Reply.ok None [])
 
   let trans_quit hostname store banner_time mailbox =
-    ((hostname, Update mailbox, banner_time, store), Reply.ok None [])
+    ((hostname, Update mailbox, banner_time, store), Pop3.Reply.ok None [])
 
   let trans_retr hostname store banner_time mailbox msg =
     S.lines_of_message store mailbox msg
@@ -137,7 +137,7 @@ module BackingStoreState (B : Banner) (S : Store) : State = struct
       | None -> trans_fail hostname store banner_time mailbox
       | Some ls ->
         ((hostname, Transaction mailbox, banner_time, store),
-          Reply.ok (Some "-1 octets") ls)
+          Pop3.Reply.ok (Some "-1 octets") ls)
 
   let trans_uidl hostname store banner_time mailbox msg =
     S.uid_of_message store mailbox msg
@@ -146,11 +146,11 @@ module BackingStoreState (B : Banner) (S : Store) : State = struct
       | None -> trans_fail hostname store banner_time mailbox
       | Some uid ->
         ((hostname, Transaction mailbox, banner_time, store),
-          Reply.ok (Some (Printf.sprintf "%d %s" msg uid)) [])
+          Pop3.Reply.ok (Some (Printf.sprintf "%d %s" msg uid)) [])
 
   let trans_invalid_command hostname store banner_time mailbox =
     ((hostname, Update mailbox, banner_time, store),
-      Reply.err (Some "command invalid while issuing transactions"))
+      Pop3.Reply.err (Some "command invalid while issuing transactions"))
 
   let f_trans hostname store banner_time mailbox cmd =
     match cmd with
@@ -193,11 +193,11 @@ module BackingStoreState (B : Banner) (S : Store) : State = struct
 
   let update_quit hostname store banner_time _mailbox =
     Lwt.return ((hostname, Disconnected, banner_time, store),
-      Reply.ok (Some (Printf.sprintf "%s POP3 server signing off" hostname)) [])
+      Pop3.Reply.ok (Some (Printf.sprintf "%s POP3 server signing off" hostname)) [])
 
   let update_invalid_cmd hostname store banner_time mailbox =
     ((hostname, Update mailbox, banner_time, store),
-      Reply.err (Some "command invalid after quiting transactions"))
+      Pop3.Reply.err (Some "command invalid after quiting transactions"))
 
   let f_update hostname store banner_time mailbox cmd =
     match cmd with
@@ -215,7 +215,7 @@ module BackingStoreState (B : Banner) (S : Store) : State = struct
       f_auth hostname store banner_time mailbox_opt cmd
     | Disconnected ->
       (* The 'Disconnected' state cannot accept commands. *)
-      Lwt.return ((hostname, Disconnected, banner_time, store), Reply.Common.internal_error)
+      Lwt.return ((hostname, Disconnected, banner_time, store), Pop3.Reply.Common.internal_error)
     | Transaction mailbox ->
       (* Drop into the handler for commands when in the Transaction state. *)
       f_trans hostname store banner_time mailbox cmd

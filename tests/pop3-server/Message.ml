@@ -1,4 +1,4 @@
-open Pop3.Message.JsonMessageParser
+open Pop3_server.Message.JsonMessageParser
 
 let lines_of_string_some_line () =
   let ls = lines_of_string "[\"A\"]" in

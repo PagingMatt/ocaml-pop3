@@ -1,10 +1,10 @@
 opam-version: "2.0"
-name: "pop3"
+name: "pop3-server-unix"
 version: "0.1"
-synopsis: "A pure OCaml implementation of RFC 1939"
+synopsis: "A pure OCaml implementation of an RFC 1939 server on UNIX"
 description: """
-A pure OCaml implementation of the components of RFC 1939 that are common across
-clients and servers.
+A pure OCaml implementation of the components of RFC 1939 that are specific to
+servers running on UNIX.
 """
 maintainer: "Matt Harrison <matt.anthony.harrison@gmail.com>"
 authors: "Matt Harrison <matt.anthony.harrison@gmail.com>"
@@ -20,7 +20,9 @@ build-test: [
   ["dune" "runtest" "-p" name "-j" jobs]
 ]
 depends: [
-  "alcotest" {test}
+  "conduit-lwt-unix"
   "dune" {build}
+  "irmin"
   "odoc" {build}
+  "pop3-server"
 ]

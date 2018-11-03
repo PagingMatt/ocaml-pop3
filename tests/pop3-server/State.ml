@@ -1,7 +1,7 @@
 open Lwt.Infix
 open Pop3.Command
-open Pop3.State
-open Pop3.Store
+open Pop3_server.State
+open Pop3_server.Store
 
 module Helpers = struct
   let digest   = "<1514764801.0@localhost>abc"

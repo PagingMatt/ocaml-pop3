@@ -1,12 +1,10 @@
 open Conduit_lwt_unix
 open Lwt.Infix
+open Pop3
+open Pop3_server.Server
+open Pop3_server.State
 
-open State
-
-module Server (S : State) : sig
-  val start : hostname:string -> maildrop:string -> stop:unit Lwt.t
-    -> unit Lwt.t
-end = struct
+module Pop3Server (S : State) : Server = struct
   let rec iter_state input_channel output_channel state =
     if S.terminated state then Lwt.return () else
     Lwt_io.read_line input_channel

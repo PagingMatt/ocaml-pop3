@@ -1,0 +1,3 @@
+(test
+ (name pop3_server_unit_tests)
+ (libraries alcotest alcotest-lwt pop3-server))

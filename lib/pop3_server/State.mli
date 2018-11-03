@@ -37,7 +37,7 @@ module type State = sig
       determine the subsequent state and the reply to send back to the client.
 
     @return promise of a tuple of next state and reply to send back to client. *)
-  val f : t -> Command.t -> (t * Reply.t) Lwt.t
+  val f : t -> Pop3.Command.t -> (t * Pop3.Reply.t) Lwt.t
 end
 
 (** The [BackingStoreState] module is an implementation of the [State] signature

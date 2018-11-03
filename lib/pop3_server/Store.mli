@@ -1,7 +1,5 @@
 (** Store of mailbox secrets and maildrop content. *)
 
-open Message
-
 (** Module type for store of mailbox secrets and maildrop content. *)
 module type Store = sig
   (** Store. *)
@@ -42,7 +40,3 @@ module type Store = sig
               exists in the mailbox. This is wrapped in a lightweight thread.*)
   val uid_of_message : t -> string -> int -> string option Lwt.t
 end
-
-(** The [IrminStore] module is an implementation of the [Store] signature which
-    uses Irmin for the underlying store. *)
-module IrminStore (P : MessageParser) : Store

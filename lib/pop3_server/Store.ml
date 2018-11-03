@@ -7,6 +7,8 @@ module type Store = sig
 
   val apop_of_mailbox : t -> Unix.tm -> string -> string -> string option Lwt.t
 
+  val message_list_of_mailbox : t -> string -> int list option Lwt.t
+
   val lines_of_message : t -> string -> int -> string list option Lwt.t
 
   val uid_of_message : t -> string -> int -> string option Lwt.t

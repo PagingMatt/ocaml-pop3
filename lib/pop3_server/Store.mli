@@ -26,6 +26,12 @@ module type Store = sig
               mailbox.*)
   val apop_of_mailbox : t -> Unix.tm -> string -> string -> string option Lwt.t
 
+  (** Finds the message numbers of the messages in the mailbox.
+
+      @return [None] if the mailbox does not exist in [t] or [Some ms] if the
+              mailbox does exist, where [ms] is a list of message numbers. *)
+  val message_list_of_mailbox : t -> string -> int list option Lwt.t
+
   (** Read a message from store [t] in mailbox corresponding to the [string]
       parameter with id corresponding to the [int] parameter.
 

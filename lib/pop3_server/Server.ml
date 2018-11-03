@@ -1,6 +1,6 @@
 open Conduit_lwt_unix
 open Lwt.Infix
-
+open Pop3
 open State
 
 module Server (S : State) : sig

@@ -122,6 +122,36 @@ module BackingStoreState (B : Banner) (S : Store) : State = struct
       ((hostname, Transaction mailbox, banner_time, store),
         Pop3.Reply.err (Some "not implemented"))
 
+  let trans_drop_listing store mailbox =
+    S.message_list_of_mailbox store mailbox
+    >>= Lwt_list.map_s
+      (fun msg ->
+        S.octets_of_message store mailbox msg
+        >|= fun os_opt -> (msg, os_opt))
+    >|= List.fold_left
+      (fun (ms, n, s) -> fun (msg, os_opt) ->
+        match os_opt with
+        | None    -> (ms, n, s)
+        | Some os ->
+          (((Printf.sprintf "%d %d" msg os)::ms), (n+1), (os+s)))
+      ([], 0, 0)
+    >|= (fun (ls, num, size) -> ((List.rev ls), num, size))
+
+  let trans_list_none hostname store banner_time mailbox =
+    trans_drop_listing store mailbox
+    >|= (fun (ls, num, size) ->
+      ((hostname, Transaction mailbox, banner_time, store),
+        Pop3.Reply.ok (Some (Printf.sprintf "%d messages (%d octets)" num size)) ls))
+
+  let trans_list_some hostname store banner_time mailbox msg =
+    S.octets_of_message store mailbox msg
+    >|= fun os_opt ->
+      match os_opt with
+      | None    -> trans_fail hostname store banner_time mailbox
+      | Some os ->
+        ((hostname, Transaction mailbox, banner_time, store),
+          Pop3.Reply.ok (Some (Printf.sprintf "%d %d" msg os)) [])
+
   let trans_noop hostname store banner_time mailbox =
     Lwt.return
       ((hostname, Transaction mailbox, banner_time, store),
@@ -139,7 +169,13 @@ module BackingStoreState (B : Banner) (S : Store) : State = struct
         ((hostname, Transaction mailbox, banner_time, store),
           Pop3.Reply.ok (Some "-1 octets") ls)
 
-  let trans_uidl hostname store banner_time mailbox msg =
+  let trans_stat hostname store banner_time mailbox =
+    trans_drop_listing store mailbox
+    >|= (fun (_, num, size) ->
+      ((hostname, Transaction mailbox, banner_time, store),
+        Pop3.Reply.ok (Some (Printf.sprintf "%d %d" num size)) []))
+
+  let trans_uidl_some hostname store banner_time mailbox msg =
     S.uid_of_message store mailbox msg
     >|= fun uid_option ->
       match uid_option with
@@ -159,10 +195,10 @@ module BackingStoreState (B : Banner) (S : Store) : State = struct
       trans_not_implemented hostname store banner_time mailbox
     | List None ->
       (* Scan list entire mailbox. *)
-      trans_not_implemented hostname store banner_time mailbox
-    | List (Some _msg) ->
+      trans_list_none hostname store banner_time mailbox
+    | List (Some msg) ->
       (* Scan list message with 'message number' [msg]. *)
-      trans_not_implemented hostname store banner_time mailbox
+      trans_list_some hostname store banner_time mailbox msg
     | Noop ->
       (* Ping back '+OK' but take no other action. *)
       trans_noop hostname store banner_time mailbox
@@ -177,7 +213,7 @@ module BackingStoreState (B : Banner) (S : Store) : State = struct
       trans_not_implemented hostname store banner_time mailbox
     | Stat ->
       (* Drop list entire mailbox. *)
-      trans_not_implemented hostname store banner_time mailbox
+      trans_stat hostname store banner_time mailbox
     | Top (_msg, _ls) ->
       (* Reads top [ls] lines from message with 'message number' [msg]. *)
       trans_not_implemented hostname store banner_time mailbox
@@ -186,7 +222,7 @@ module BackingStoreState (B : Banner) (S : Store) : State = struct
       trans_not_implemented hostname store banner_time mailbox
     | Uidl (Some msg) ->
       (* Provides unique identifier for message with 'message number' [msg]. *)
-      trans_uidl hostname store banner_time mailbox msg
+      trans_uidl_some hostname store banner_time mailbox msg
     | _ ->
       (* Other commands are invalid in Transaction state. *)
       Lwt.return (trans_invalid_command hostname store banner_time mailbox)

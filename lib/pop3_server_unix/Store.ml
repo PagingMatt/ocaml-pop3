@@ -26,6 +26,19 @@ module IrminStore (P : MessageParser) : Store = struct
         |> Digest.string
         |> fun digest -> Some digest
 
+  let message_list_of_mailbox s m =
+    IrminGitFsKvStore.list s ["mailboxes"; m]
+    >|= List.filter
+      (fun (num, ls) ->
+        match num |> int_of_string_opt with
+        | Some _ ->
+          (match ls with
+          | `Contents -> true
+          | `Node     -> false)
+        | None   -> false)
+    >|= List.map
+      (fun (num, _) -> int_of_string num)
+
   let read_message s m i =
     string_of_int i
     |> fun msg -> IrminGitFsKvStore.find s ["mailboxes"; m; msg]
@@ -36,6 +49,16 @@ module IrminStore (P : MessageParser) : Store = struct
       match contents with
       | None -> None
       | Some s -> P.lines_of_string s
+
+  let octets_of_message s m i =
+    lines_of_message s m i
+    >|= fun ls_opt ->
+      match ls_opt with
+      | None    -> None
+      | Some ls -> Some (ls
+        |> String.concat "\r\n"
+        |> Bytes.of_string
+        |> Bytes.length)
 
   let uid_of_message s m i =
     read_message s m i

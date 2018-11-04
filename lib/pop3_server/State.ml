@@ -122,6 +122,24 @@ module BackingStoreState (B : Banner) (S : Store) : State = struct
       ((hostname, Transaction mailbox, banner_time, store),
         Pop3.Reply.err (Some "not implemented"))
 
+  let trans_list_none hostname store banner_time mailbox =
+    S.message_list_of_mailbox store mailbox
+    >>= Lwt_list.map_s
+      (fun msg ->
+        S.octets_of_message store mailbox msg
+        >|= fun os_opt -> (msg, os_opt))
+    >|= List.fold_left
+      (fun (ms, n, s) -> fun (msg, os_opt) ->
+        match os_opt with
+        | None    -> (ms, n, s)
+        | Some os ->
+          (((Printf.sprintf "%d %d" msg os)::ms), (n+1), (os+s)))
+      ([], 0, 0)
+    >|= (fun (ls, num, size) -> ((List.rev ls), num, size))
+    >|= (fun (ls, num, size) ->
+      ((hostname, Transaction mailbox, banner_time, store),
+        Pop3.Reply.ok (Some (Printf.sprintf "%d messages (%d octets)" num size)) ls))
+
   let trans_noop hostname store banner_time mailbox =
     Lwt.return
       ((hostname, Transaction mailbox, banner_time, store),
@@ -159,7 +177,7 @@ module BackingStoreState (B : Banner) (S : Store) : State = struct
       trans_not_implemented hostname store banner_time mailbox
     | List None ->
       (* Scan list entire mailbox. *)
-      trans_not_implemented hostname store banner_time mailbox
+      trans_list_none hostname store banner_time mailbox
     | List (Some _msg) ->
       (* Scan list message with 'message number' [msg]. *)
       trans_not_implemented hostname store banner_time mailbox

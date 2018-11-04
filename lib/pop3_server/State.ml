@@ -140,6 +140,15 @@ module BackingStoreState (B : Banner) (S : Store) : State = struct
       ((hostname, Transaction mailbox, banner_time, store),
         Pop3.Reply.ok (Some (Printf.sprintf "%d messages (%d octets)" num size)) ls))
 
+  let trans_list_some hostname store banner_time mailbox msg =
+    S.octets_of_message store mailbox msg
+    >|= fun os_opt ->
+      match os_opt with
+      | None    -> trans_fail hostname store banner_time mailbox
+      | Some os ->
+        ((hostname, Transaction mailbox, banner_time, store),
+          Pop3.Reply.ok (Some (Printf.sprintf "%d %d" msg os)) [])
+
   let trans_noop hostname store banner_time mailbox =
     Lwt.return
       ((hostname, Transaction mailbox, banner_time, store),
@@ -178,9 +187,9 @@ module BackingStoreState (B : Banner) (S : Store) : State = struct
     | List None ->
       (* Scan list entire mailbox. *)
       trans_list_none hostname store banner_time mailbox
-    | List (Some _msg) ->
+    | List (Some msg) ->
       (* Scan list message with 'message number' [msg]. *)
-      trans_not_implemented hostname store banner_time mailbox
+      trans_list_some hostname store banner_time mailbox msg
     | Noop ->
       (* Ping back '+OK' but take no other action. *)
       trans_noop hostname store banner_time mailbox

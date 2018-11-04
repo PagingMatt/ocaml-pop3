@@ -175,7 +175,7 @@ module BackingStoreState (B : Banner) (S : Store) : State = struct
       ((hostname, Transaction mailbox, banner_time, store),
         Pop3.Reply.ok (Some (Printf.sprintf "%d %d" num size)) []))
 
-  let trans_uidl hostname store banner_time mailbox msg =
+  let trans_uidl_some hostname store banner_time mailbox msg =
     S.uid_of_message store mailbox msg
     >|= fun uid_option ->
       match uid_option with
@@ -222,7 +222,7 @@ module BackingStoreState (B : Banner) (S : Store) : State = struct
       trans_not_implemented hostname store banner_time mailbox
     | Uidl (Some msg) ->
       (* Provides unique identifier for message with 'message number' [msg]. *)
-      trans_uidl hostname store banner_time mailbox msg
+      trans_uidl_some hostname store banner_time mailbox msg
     | _ ->
       (* Other commands are invalid in Transaction state. *)
       Lwt.return (trans_invalid_command hostname store banner_time mailbox)

@@ -175,6 +175,22 @@ module BackingStoreState (B : Banner) (S : Store) : State = struct
       ((hostname, Transaction mailbox, banner_time, store),
         Pop3.Reply.ok (Some (Printf.sprintf "%d %d" num size)) []))
 
+  let trans_top hostname store banner_time mailbox msg n =
+    let rec top ls m =
+      if m = 0 then [] else
+      match ls with
+      | []     -> []
+      | l::ls' -> l::(top ls' (m-1))
+    in
+
+    S.lines_of_message store mailbox msg
+    >|= fun ls_option ->
+      match ls_option with
+      | None -> trans_fail hostname store banner_time mailbox
+      | Some ls ->
+        ((hostname, Transaction mailbox, banner_time, store),
+          Pop3.Reply.ok None (top ls n))
+
   let trans_uidl_none hostname store banner_time mailbox =
     S.message_list_of_mailbox store mailbox
     >>= Lwt_list.map_s
@@ -230,9 +246,9 @@ module BackingStoreState (B : Banner) (S : Store) : State = struct
     | Stat ->
       (* Drop list entire mailbox. *)
       trans_stat hostname store banner_time mailbox
-    | Top (_msg, _ls) ->
-      (* Reads top [ls] lines from message with 'message number' [msg]. *)
-      trans_not_implemented hostname store banner_time mailbox
+    | Top (msg, n) ->
+      (* Reads top [n] lines from message with 'message number' [msg]. *)
+      trans_top hostname store banner_time mailbox msg n
     | Uidl None ->
       (* Provides unique identifiers for all messages in mailbox. *)
       trans_uidl_none hostname store banner_time mailbox

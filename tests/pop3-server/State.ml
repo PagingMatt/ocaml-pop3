@@ -489,7 +489,7 @@ module Transaction = struct
           "-ERR not implemented" l
       | _ -> Alcotest.fail "Unexpected reply lines pattern."
 
-  let f_transaction_uidl_none_err_not_implemented_reply switch () =
+  let f_transaction_uidl_none_ok_reply switch () =
     Lwt_switch.add_hook (Some switch) (fun () -> Lwt.return ());
     TestStateA.start hostname maildrop
     >>= fun s0     -> TestStateA.f s0 cmd_user
@@ -497,9 +497,13 @@ module Transaction = struct
     >>= fun (s2,_) -> TestStateA.f s2 cmd_uidl
     >|= fun (_ ,r) ->
       match Pop3.Reply.lines_of_t r with
-      | l::[] ->
+      | l1::l2::l3::[] ->
         Alcotest.(check string) "Checking reply."
-          "-ERR not implemented" l
+          "+OK" l1;
+        Alcotest.(check string) "Checking reply."
+          "1 0123456789abcdef" l2;
+        Alcotest.(check string) "Checking reply."
+          "2 0123456789abcdef" l3;
       | _ -> Alcotest.fail "Unexpected reply lines pattern."
 
   let f_transaction_uidl_some_ok_reply switch () =
@@ -554,7 +558,7 @@ module Transaction = struct
     Alcotest_lwt.test_case "Check reply from valid RSET command in 'Transaction mailbox'."                                   `Quick (f_transaction_rset_err_not_implemented_reply);
     Alcotest_lwt.test_case "Check reply from valid STAT command in 'Transaction mailbox'."                                   `Quick (f_transaction_stat_ok_reply);
     Alcotest_lwt.test_case "Check reply from valid TOP command in 'Transaction mailbox'."                                    `Quick (f_transaction_top_err_not_implemented_reply);
-    Alcotest_lwt.test_case "Check reply from valid UIDL (None) command in 'Transaction mailbox'."                            `Quick (f_transaction_uidl_none_err_not_implemented_reply);
+    Alcotest_lwt.test_case "Check reply from valid UIDL (None) command in 'Transaction mailbox'."                            `Quick (f_transaction_uidl_none_ok_reply);
     Alcotest_lwt.test_case "Check reply from valid UIDL (Some) command in 'Transaction mailbox'."                            `Quick (f_transaction_uidl_some_ok_reply);
     Alcotest_lwt.test_case "Check reply from invalid UIDL (Some) command in 'Transaction mailbox' (message does not exist)." `Quick (f_transaction_uidl_some_err_reply);
     Alcotest_lwt.test_case "Check reply from invalid USER command in 'Transaction mailbox'."                                 `Quick (f_transaction_other_cmd_err_reply cmd_user);

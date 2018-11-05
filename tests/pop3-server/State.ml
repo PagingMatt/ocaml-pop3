@@ -10,7 +10,7 @@ module Helpers = struct
   let mailbox  = "123"
   let mailbox' = "456"
   let maildrop = "/tmp/pop3"
-  let msg      = ["Hello, world."]
+  let msg      = ["Hello, world."; "Foo. Bar."]
   let secret   = "abc"
   let secret'  = "def"
   let uid      = "0123456789abcdef"
@@ -430,11 +430,13 @@ module Transaction = struct
     >>= fun (s2,_) -> TestStateA.f s2 cmd_retr
     >|= fun (_ ,r) ->
       match Pop3.Reply.lines_of_t r with
-      | l1::l2::[] ->
+      | l1::l2::l3::[] ->
         Alcotest.(check string) "Checking reply (line 1)."
           "+OK -1 octets" l1;
         Alcotest.(check string) "Checking reply (line 2)."
-          "Hello, world." l2
+          "Hello, world." l2;
+        Alcotest.(check string) "Checking reply (line 3)."
+          "Foo. Bar." l3
       | _ -> Alcotest.fail "Unexpected reply lines pattern."
 
   let f_transaction_retr_err_reply switch () =
@@ -476,7 +478,7 @@ module Transaction = struct
           "+OK 2 26" l
       | _ -> Alcotest.fail "Unexpected reply lines pattern."
 
-  let f_transaction_top_err_not_implemented_reply switch () =
+  let f_transaction_top_ok_reply switch () =
     Lwt_switch.add_hook (Some switch) (fun () -> Lwt.return ());
     TestStateA.start hostname maildrop
     >>= fun s0     -> TestStateA.f s0 cmd_user
@@ -484,9 +486,11 @@ module Transaction = struct
     >>= fun (s2,_) -> TestStateA.f s2 cmd_top
     >|= fun (_ ,r) ->
       match Pop3.Reply.lines_of_t r with
-      | l::[] ->
+      | l1::l2::[] ->
         Alcotest.(check string) "Checking reply."
-          "-ERR not implemented" l
+          "+OK" l1;
+        Alcotest.(check string) "Checking reply."
+          "Hello, world." l2;
       | _ -> Alcotest.fail "Unexpected reply lines pattern."
 
   let f_transaction_uidl_none_ok_reply switch () =
@@ -557,7 +561,7 @@ module Transaction = struct
     Alcotest_lwt.test_case "Check reply from invalid RETR command in 'Transaction mailbox' (message does not exist)."        `Quick (f_transaction_retr_err_reply);
     Alcotest_lwt.test_case "Check reply from valid RSET command in 'Transaction mailbox'."                                   `Quick (f_transaction_rset_err_not_implemented_reply);
     Alcotest_lwt.test_case "Check reply from valid STAT command in 'Transaction mailbox'."                                   `Quick (f_transaction_stat_ok_reply);
-    Alcotest_lwt.test_case "Check reply from valid TOP command in 'Transaction mailbox'."                                    `Quick (f_transaction_top_err_not_implemented_reply);
+    Alcotest_lwt.test_case "Check reply from valid TOP command in 'Transaction mailbox'."                                    `Quick (f_transaction_top_ok_reply);
     Alcotest_lwt.test_case "Check reply from valid UIDL (None) command in 'Transaction mailbox'."                            `Quick (f_transaction_uidl_none_ok_reply);
     Alcotest_lwt.test_case "Check reply from valid UIDL (Some) command in 'Transaction mailbox'."                            `Quick (f_transaction_uidl_some_ok_reply);
     Alcotest_lwt.test_case "Check reply from invalid UIDL (Some) command in 'Transaction mailbox' (message does not exist)." `Quick (f_transaction_uidl_some_err_reply);

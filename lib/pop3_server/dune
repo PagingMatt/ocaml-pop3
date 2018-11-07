@@ -1,7 +1,7 @@
 (library
  (name pop3_server)
  (public_name pop3-server)
- (libraries lwt pop3 yojson))
+ (libraries irmin-git lwt pop3 yojson))
 
 (documentation
  (package pop3-server))

@@ -1,7 +1,10 @@
 (** POP3 server. *)
 
-(** The [Server] module type. *)
-module type Server = sig
+open State
+
+(** The [Server] module type is a functor parameterised my some [State]
+    machine for sessions on the server. *)
+module type Server = functor (S : State) -> sig
   (** Starts a TCP server listening on port 110 to serve POP3 client
       connections.
 

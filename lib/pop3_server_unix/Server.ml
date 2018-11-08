@@ -4,7 +4,7 @@ open Pop3
 open Pop3_server.Server
 open Pop3_server.State
 
-module Pop3Server (S : State) : Server = struct
+module MakePop3ServerFromState (S : State) = struct
   let rec iter_state input_channel output_channel state =
     if S.terminated state then Lwt.return () else
     Lwt_io.read_line input_channel
@@ -46,3 +46,5 @@ module Pop3Server (S : State) : Server = struct
     let mode = `TCP (`Port 110) in
     Conduit_lwt_unix.serve ~stop ~on_exn ~ctx ~mode (callback hostname maildrop)
 end
+
+module Pop3UnixServer : Server = MakePop3ServerFromState

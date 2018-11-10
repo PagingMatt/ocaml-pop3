@@ -166,8 +166,10 @@ module BackingStoreState (B : Banner) (S : Store) : State = struct
       match ls_option with
       | None -> trans_fail hostname store banner_time mailbox
       | Some ls ->
+        let octets =
+          (ls |> String.concat "\r\n" |> Bytes.of_string |> Bytes.length) + 2 in
         ((hostname, Transaction mailbox, banner_time, store),
-          Pop3.Reply.ok (Some "-1 octets") ls)
+          Pop3.Reply.ok (Some (Printf.sprintf "%d octets" octets)) ls)
 
   let trans_stat hostname store banner_time mailbox =
     trans_drop_listing store mailbox

@@ -23,7 +23,7 @@ let lines_of_t_ok_none_empty () =
 
 let lines_of_t_ok_none_lines () =
   match ok None ["A"; "B"] |> lines_of_t with
-  | l1::l2::l3::[] ->
+  | l1::l2::l3::_l4::[] ->
     Alcotest.(check string) "Checking line 1 serialization of 'Ok (None, ['A'; 'B'])'."
       "+OK" l1;
     Alcotest.(check string) "Checking line 2 serialization of 'Ok (None, ['A'; 'B'])'."
@@ -41,7 +41,7 @@ let lines_of_t_ok_some_empty () =
 
 let lines_of_t_ok_some_lines () =
   match ok (Some "A") ["B"; "C"] |> lines_of_t with
-  | l1::l2::l3::[] ->
+  | l1::l2::l3::_l4::[] ->
     Alcotest.(check string) "Checking line 1 serialization of 'Ok (None, ['A'; 'B'])'."
       "+OK A" l1;
     Alcotest.(check string) "Checking line 2 serialization of 'Ok (None, ['A'; 'B'])'."

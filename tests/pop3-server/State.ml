@@ -374,7 +374,7 @@ module Transaction = struct
     >>= fun (s2,_) -> TestStateA.f s2 cmd_list
     >|= fun (_ ,r) ->
       match Pop3.Reply.lines_of_t r with
-      | l1::l2::l3::[] ->
+      | l1::l2::l3::_l4::[] ->
         Alcotest.(check string) "Checking reply."
           "+OK 2 messages (26 octets)" l1;
         Alcotest.(check string) "Checking reply."
@@ -430,7 +430,7 @@ module Transaction = struct
     >>= fun (s2,_) -> TestStateA.f s2 cmd_retr
     >|= fun (_ ,r) ->
       match Pop3.Reply.lines_of_t r with
-      | l1::l2::l3::[] ->
+      | l1::l2::l3::_l4::[] ->
         Alcotest.(check string) "Checking reply (line 1)."
           "+OK -1 octets" l1;
         Alcotest.(check string) "Checking reply (line 2)."
@@ -486,7 +486,7 @@ module Transaction = struct
     >>= fun (s2,_) -> TestStateA.f s2 cmd_top
     >|= fun (_ ,r) ->
       match Pop3.Reply.lines_of_t r with
-      | l1::l2::[] ->
+      | l1::l2::_l3::[] ->
         Alcotest.(check string) "Checking reply."
           "+OK" l1;
         Alcotest.(check string) "Checking reply."
@@ -501,7 +501,7 @@ module Transaction = struct
     >>= fun (s2,_) -> TestStateA.f s2 cmd_uidl
     >|= fun (_ ,r) ->
       match Pop3.Reply.lines_of_t r with
-      | l1::l2::l3::[] ->
+      | l1::l2::l3::_l4::[] ->
         Alcotest.(check string) "Checking reply."
           "+OK" l1;
         Alcotest.(check string) "Checking reply."

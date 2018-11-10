@@ -10,12 +10,21 @@ let build_first_line indicator msg =
   if msg = "" then indicator else
   String.concat " " [indicator; msg]
 
+let build_multi_lines lines =
+  match lines with
+  | [] -> []
+  | ls -> ls @ ["."]
+
 let lines_of_t reply =
   match reply with
-  | Error None           -> [string_of_error]
-  | Error (Some msg)     -> [build_first_line string_of_error msg]
-  | Ok (None, lines)     -> string_of_ok::lines
-  | Ok (Some msg, lines) -> (build_first_line string_of_ok msg)::lines
+  | Error None           ->
+    [string_of_error]
+  | Error (Some msg)     ->
+    [build_first_line string_of_error msg]
+  | Ok (None, lines)     ->
+    string_of_ok::(build_multi_lines lines)
+  | Ok (Some msg, lines) ->
+    (build_first_line string_of_ok msg)::(build_multi_lines lines)
 
 module Common : sig
   val greeting : string -> Unix.tm -> t

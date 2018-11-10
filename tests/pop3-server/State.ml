@@ -432,7 +432,7 @@ module Transaction = struct
       match Pop3.Reply.lines_of_t r with
       | l1::l2::l3::_l4::[] ->
         Alcotest.(check string) "Checking reply (line 1)."
-          "+OK -1 octets" l1;
+          "+OK 26 octets" l1;
         Alcotest.(check string) "Checking reply (line 2)."
           "Hello, world." l2;
         Alcotest.(check string) "Checking reply (line 3)."

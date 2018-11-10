@@ -126,8 +126,15 @@ module BackingStoreState (B : Banner) (S : Store) : State = struct
     S.message_list_of_mailbox store mailbox
     >>= Lwt_list.map_s
       (fun msg ->
-        S.octets_of_message store mailbox msg
-        >|= fun os_opt -> (msg, os_opt))
+        S.lines_of_message store mailbox msg
+        >|= fun ls_opt ->
+          (match ls_opt with
+          | None -> (msg, None)
+          | Some ls ->
+            (msg,
+              Some ((String.concat "\r\n" ls
+              |> Bytes.of_string
+              |> Bytes.length) + 2))))
     >|= List.fold_left
       (fun (ms, n, s) -> fun (msg, os_opt) ->
         match os_opt with
@@ -144,13 +151,15 @@ module BackingStoreState (B : Banner) (S : Store) : State = struct
         Pop3.Reply.ok (Some (Printf.sprintf "%d messages (%d octets)" num size)) ls))
 
   let trans_list_some hostname store banner_time mailbox msg =
-    S.octets_of_message store mailbox msg
-    >|= fun os_opt ->
-      match os_opt with
+    S.lines_of_message store mailbox msg
+    >|= fun ls_opt ->
+      match ls_opt with
       | None    -> trans_fail hostname store banner_time mailbox
-      | Some os ->
+      | Some ls ->
+        let octets =
+          (ls |> String.concat "\r\n" |> Bytes.of_string |> Bytes.length) + 2 in
         ((hostname, Transaction mailbox, banner_time, store),
-          Pop3.Reply.ok (Some (Printf.sprintf "%d %d" msg os)) [])
+          Pop3.Reply.ok (Some (Printf.sprintf "%d %d" msg octets)) [])
 
   let trans_noop hostname store banner_time mailbox =
     Lwt.return

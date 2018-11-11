@@ -33,9 +33,6 @@ module Helpers = struct
     let message_list_of_mailbox _s _m =
       Lwt.return [1; 2]
 
-    let octets_of_message _s _m _i =
-      Lwt.return (Some 13)
-
     let lines_of_message _s _m _i =
       Lwt.return (Some msg)
 
@@ -57,9 +54,6 @@ module Helpers = struct
     let message_list_of_mailbox _s _m =
       Lwt.return [1]
 
-    let octets_of_message _s _m _i =
-      Lwt.return None
-
     let lines_of_message _s _m _i =
       Lwt.return None
 
@@ -80,9 +74,6 @@ module Helpers = struct
 
     let message_list_of_mailbox _s _m =
       Lwt.return []
-
-    let octets_of_message _s _m _i =
-      Lwt.return None
 
     let lines_of_message _s _m _i =
       Lwt.return None
@@ -376,11 +367,11 @@ module Transaction = struct
       match Pop3.Reply.lines_of_t r with
       | l1::l2::l3::_l4::[] ->
         Alcotest.(check string) "Checking reply."
-          "+OK 2 messages (26 octets)" l1;
+          "+OK 2 messages (52 octets)" l1;
         Alcotest.(check string) "Checking reply."
-          "1 13" l2;
+          "1 26" l2;
         Alcotest.(check string) "Checking reply."
-          "2 13" l3
+          "2 26" l3
       | _ -> Alcotest.fail "Unexpected reply lines pattern."
 
   let f_transaction_list_some_ok_reply switch () =
@@ -393,7 +384,7 @@ module Transaction = struct
       match Pop3.Reply.lines_of_t r with
       | l::[] ->
         Alcotest.(check string) "Checking reply."
-          "+OK 1 13" l
+          "+OK 1 26" l
       | _ -> Alcotest.fail "Unexpected reply lines pattern."
 
   let f_transaction_noop_ok_reply switch () =
@@ -475,7 +466,7 @@ module Transaction = struct
       match Pop3.Reply.lines_of_t r with
       | l::[] ->
         Alcotest.(check string) "Checking reply."
-          "+OK 2 26" l
+          "+OK 2 52" l
       | _ -> Alcotest.fail "Unexpected reply lines pattern."
 
   let f_transaction_top_ok_reply switch () =

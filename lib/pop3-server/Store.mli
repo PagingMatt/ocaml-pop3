@@ -34,12 +34,6 @@ module type Store = sig
               mailbox does exist, where [ms] is a list of message numbers. *)
   val message_list_of_mailbox : t -> string -> int list Lwt.t
 
-  (** Finds the number of octets in a given message.
-
-      @return [None] if message doesn't exist in mailbox in [t] or [Some n]
-              where [n] is the number of octets in the message. *)
-  val octets_of_message : t -> string -> int -> int option Lwt.t
-
   (** Read a message from store [t] in mailbox corresponding to the [string]
       parameter with id corresponding to the [int] parameter.
 

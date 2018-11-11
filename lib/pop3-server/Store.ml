@@ -11,8 +11,6 @@ module type Store = sig
 
   val message_list_of_mailbox : t -> string -> int list Lwt.t
 
-  val octets_of_message : t -> string -> int -> int option Lwt.t
-
   val lines_of_message : t -> string -> int -> string list option Lwt.t
 
   val uid_of_message : t -> string -> int -> string option Lwt.t
@@ -68,16 +66,6 @@ module IrminStore (S : IrminStringKv) (P : MessageParser) : Store = struct
       match contents with
       | None -> None
       | Some s -> P.lines_of_string s
-
-  let octets_of_message s m i =
-    lines_of_message s m i
-    >|= fun ls_opt ->
-      match ls_opt with
-      | None    -> None
-      | Some ls -> Some (ls
-        |> String.concat "\r\n"
-        |> Bytes.of_string
-        |> Bytes.length)
 
   let uid_of_message s m i =
     read_message s m i

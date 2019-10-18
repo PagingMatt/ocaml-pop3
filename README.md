@@ -1,10 +1,14 @@
 # ocaml-pop3
 
-A pure OCaml implementation of a POP3 server ([RFC 1939](https://tools.ietf.org/html/rfc1939)).
+A pure OCaml implementation of [RFC 1939](https://tools.ietf.org/html/rfc1939).
 
 [![Build status](https://ci.appveyor.com/api/projects/status/gywwy2ro4690bvay/branch/master?svg=true)](https://ci.appveyor.com/project/m-harrison/ocaml-pop3/branch/master)
 
 ## Acknowledgements
+
+### Documentation
+
+Documentation was automatically generated from sources via [odoc](https://github.com/ocaml/odoc).
 
 ### .gitignore
 
